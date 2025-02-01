@@ -1,0 +1,129 @@
+name: Weekly Hackathon CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  test-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Cache node_modules
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: 'npm'
+      - name: Cache node_modules
+        id: cache-nodemodules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-deps${{ hashFiles('**/package-lock.json', '**/package.json', '!**/node_modules') }}-dbschema${{ hashFiles('**/packages/db/src/lib/schema.prisma') }}-
+
+      - name: Install dependencies
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+
+      - name: Typecheck
+        run: npm run typecheck
+
+
+      - name: Cache weeklyhackathon-core build output
+        id: cache-build-core
+        uses: actions/cache@v4
+        with:
+          path: apps/weeklyhackathon-core/dist
+          key: ${{ runner.os }}-core-deps${{ hashFiles('**/package-lock.json') }}-dbschema${{ hashFiles('**/packages/db/src/lib/schema.prisma') }}-src${{ hashFiles('apps/weeklyhackathon-core/**/*.ts', '!**/node_modules/**', 'packages/**/*.ts') }}
+
+      - name: Build weeklyhackathon-core
+        if: steps.cache-build-core.outputs.cache-hit != 'true'
+        run: npm run build -w=apps/weeklyhackathon-core
+
+
+      # Prepare docker
+      - name: Cache Docker image
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: docker_image.tar
+          # Adjust the key so it changes when Dockerfile or
+          # scripts for `docker:build:postgres` change:
+          key: ${{ runner.os }}-docker-postgres-${{ hashFiles('**/Dockerfile', '**/docker*') }}
+
+      # --------------------------------------------------
+      # 3. Load Docker image if cached
+      # --------------------------------------------------
+      - name: Load Docker image from cache
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i docker_image.tar
+
+      # --------------------------------------------------
+      # 4. Build (and save) Docker image if NOT cached
+      #
+      # The script `npm run docker:build:postgres` should:
+      #   - run `docker build ... -t postgres-with-vector:latest`
+      #
+      # Then we `docker save` that built image to `docker_image.tar`.
+      # --------------------------------------------------
+      - name: Build Docker image
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          npm run docker:build:postgres
+          docker save postgres-with-vector:latest -o docker_image.tar
+
+      # --------------------------------------------------
+      # 5. Start the container
+      #
+      # We'll run it with health checks to ensure Postgres is up
+      # before moving on to tests.
+      # --------------------------------------------------
+      - name: Start Docker container
+        run: |
+          # Run container in the background
+          docker run -d \
+            --name postgres \
+            --health-cmd 'pg_isready -U postgres' \
+            --health-interval 10s \
+            --health-timeout 5s \
+            --health-retries 5 \
+            -p 5432:5432 \
+            postgres-with-vector:latest
+
+      # --------------------------------------------------
+      # 6. Wait for container to be healthy
+      #
+      # We'll poll Docker health status a few times.
+      # --------------------------------------------------
+      - name: Wait for container to be healthy
+        run: |
+          for i in {1..10}; do
+            status=$(docker inspect --format='{{json .State.Health.Status}}' postgres)
+            if [ "$status" = "\"healthy\"" ]; then
+              echo "Postgres container is healthy!"
+              exit 0
+            else
+              echo "Waiting for Postgres to become healthy (attempt $i)..."
+              sleep 5
+            fi
+          done
+          echo "Container did not become healthy in time."
+          exit 1
+
+
+      - name: Setup test database
+        run: |
+          cp .env.ci .env.test.local \
+          && npx dotenv -e .env.test.local -- npm run prisma:migrate:prod
+
+      - name: Run tests
+        run: npm run test

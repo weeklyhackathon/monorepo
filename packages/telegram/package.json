@@ -1,0 +1,16 @@
+{
+  "name": "@weeklyhackathon/telegram",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.ts",
+  "scripts": {
+    "test": "npx jest --passWithNoTests"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/lib/*.ts"
+  },
+  "dependencies": {
+    "telegramify-markdown": "^1.2.2"
+  }
+}

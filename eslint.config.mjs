@@ -29,13 +29,13 @@ export default tseslint.config(
           ],
           pathGroups: [
             {
-              pattern: '@gladio.ai/**',
-              group: 'external', // Treat `@gladio.ai` as external
+              pattern: '@weeklyhackathon/**',
+              group: 'external', // Treat `@weeklyhackathon` as external
               position: 'after'
             },
             {
-              pattern: '@gladio.ai/**',
-              group: 'type', // Separate type imports from `@gladio.ai`
+              pattern: '@weeklyhackathon/**',
+              group: 'type', // Separate type imports from `@weeklyhackathon`
               position: 'before'
             }
           ],

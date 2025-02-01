@@ -56,14 +56,3 @@ test-output
 .next
 out
 
-
-# Python
-# The virtual environment
-gladiopy/
-gladio_env/
-# The source data we process
-python/sourceData
-python/models
-
-# Temporary for now
-python/

@@ -1,0 +1,1 @@
+web: npm run prisma:migrate:prod && npm run start:prod

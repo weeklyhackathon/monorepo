@@ -1,0 +1,71 @@
+{
+	"eslint.format.enable": true,
+	"files.associations": {
+		"*.css": "scss"
+	},
+	"terminal.integrated.shellArgs.osx": ["-l"],
+	"[html]": {
+		"editor.defaultFormatter": "vscode.html-language-features"
+	},
+	"[solidity]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	},
+	"[python]": {
+		"diffEditor.ignoreTrimWhitespace": false,
+		"editor.formatOnType": true,
+		"editor.wordBasedSuggestions": "off",
+		"editor.defaultFormatter": "ms-python.autopep8",
+		"editor.formatOnSave": true,
+		"editor.autoClosingQuotes": "languageDefined"
+	},
+  // "jestrunner.jestCommand": "node --experimental-vm-modules --require ts-node/register node_modules/.bin/jest test --runTestsByPath",
+  "jestrunner.jestCommand": "npx dotenv -e .env.test.local -- node --experimental-vm-modules 'node_modules/.bin/jest' --verbose",
+  "jestrunner.runOptions": ["--verbose"],
+  "jestrunner.configPath": "jest.config.all.js",
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"editor.tabSize": 2,
+	"editor.detectIndentation": false,
+	"files.eol": "\n",
+	"[javascript][typescript][typescriptreact]": {
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	},
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/**": true,
+		"**/.next/**": true,
+		"**/tmp/**": true,
+		"**/bower_components/**": true
+	},
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/Thumbs.db": true
+	},
+  "python.defaultInterpreterPath": "/usr/local/bin/python",
+	"python.analysis.extraPaths": ["./python/s3-script-py/script"]
+}

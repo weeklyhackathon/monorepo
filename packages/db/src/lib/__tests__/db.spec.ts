@@ -1,5 +1,5 @@
 
-import type { GithubUser, User } from '../../index';
+import type { FarcasterUser, GithubUser, User } from '../../index';
 import { validate } from 'uuid';
 import { prisma } from '../../index';
 
@@ -7,18 +7,29 @@ import { prisma } from '../../index';
 describe('createUser', () => {
   it('should create a user', async () => {
 
+    const userPath = `test-${Math.random().toString(36).substring(2, 15)}`;
+
+    const farcasterId = Math.floor(Math.random() * 1000000000);
+    const githubId = Math.floor(Math.random() * 1000000000);
     const user = await prisma.user.create({
       data: {
-        name: 'test',
-        farcasterId: 1234567890,
+        path: userPath,
+        displayName: 'test',
+        farcasterUser: {
+          create: {
+            farcasterId,
+            username: `testfc-${farcasterId}`
+          }
+        },
         githubUser: {
           create: {
-            githubId: 111777,
-            username: 'test'
+            githubId,
+            username: `testgh-${githubId}`
           }
         }
       },
       include: {
+        farcasterUser: true,
         githubUser: true
       }
     });
@@ -28,15 +39,22 @@ describe('createUser', () => {
     expect(validate(userId)).toBe(true);
 
 
-    expect(user).toMatchObject<User & { githubUser: GithubUser }>({
+    expect(user).toMatchObject<User & { githubUser: GithubUser; farcasterUser: FarcasterUser }>({
       id: userId,
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
-      name: 'test',
-      farcasterId: 1234567890,
+      path: userPath,
+      displayName: 'test',
+      farcasterUser: {
+        farcasterId,
+        username: `testfc-${farcasterId}`,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        userId: userId
+      },
       githubUser: {
-        githubId: 111777,
-        username: 'test',
+        githubId,
+        username: `testgh-${githubId}`,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         userId: userId

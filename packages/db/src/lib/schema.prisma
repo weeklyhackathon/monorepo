@@ -27,7 +27,7 @@ model GithubUser {
   updatedAt DateTime @updatedAt
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
-  username  String
+  username  String   @unique
 }
 
 model FarcasterUser {
@@ -36,5 +36,5 @@ model FarcasterUser {
   updatedAt   DateTime @updatedAt
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id])
-  username    String
+  username    String   @unique
 }

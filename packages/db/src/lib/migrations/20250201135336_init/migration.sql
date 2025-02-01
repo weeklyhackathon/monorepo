@@ -38,7 +38,13 @@ CREATE UNIQUE INDEX "User_path_key" ON "User"("path");
 CREATE UNIQUE INDEX "GithubUser_userId_key" ON "GithubUser"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "GithubUser_username_key" ON "GithubUser"("username");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "FarcasterUser_userId_key" ON "FarcasterUser"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "FarcasterUser_username_key" ON "FarcasterUser"("username");
 
 -- AddForeignKey
 ALTER TABLE "GithubUser" ADD CONSTRAINT "GithubUser_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

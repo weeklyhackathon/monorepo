@@ -37,7 +37,7 @@ cat > "packages/$package_name/package.json" << EOL
   "private": true,
   "main": "./index.ts",
   "scripts": {
-    "test": "npx jest"
+    "test": "npx jest --passWithNoTests"
   },
   "exports": {
     ".": "./src/index.ts",

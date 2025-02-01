@@ -12,29 +12,29 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  path String @unique
-  displayName String
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  path          String         @unique
+  displayName   String
   farcasterUser FarcasterUser?
-  githubUser GithubUser?
+  githubUser    GithubUser?
 }
 
 model GithubUser {
-  githubId Int @id
+  githubId  Int      @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  username String
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  username  String
 }
 
 model FarcasterUser {
-  farcasterId Int @id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  username String
+  farcasterId Int      @id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  username    String
 }

@@ -1,0 +1,15 @@
+{
+  "name": "weeklyhackathon-core",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "prisma:migrate:prod": "npx prisma migrate deploy --schema=../../packages/db/src/lib/schema.prisma",
+    "start": "npx dotenv -e .env -- npx tsx watch src/main.ts",
+    "start:prod": "npm run prisma:migrate:prod && node --import tsx dist/weeklyhackathon-core/main.js",
+    "build": "rm -rf ./dist && npx tsc --project ./",
+    "typecheck": "npx tsc --noEmit"
+  },
+  "dependencies": {
+
+  }
+}

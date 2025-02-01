@@ -16,6 +16,7 @@ export default tseslint.config(
   // configs.recommended,
   {
     rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
       'import/no-duplicates': 'error',
       'import/order': [
         'error',

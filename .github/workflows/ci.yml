@@ -38,6 +38,19 @@ jobs:
         run: npm run typecheck
 
 
+      # 1. Build the frontend app
+      - name: Cache frontend build output
+        id: cache-build-frontend
+        uses: actions/cache@v4
+        with:
+          path: apps/frontend/dist
+          key: ${{ runner.os }}-frontend-deps${{ hashFiles('**/package-lock.json') }}-dbschema${{ hashFiles('**/packages/db/src/lib/schema.prisma') }}-src${{ hashFiles('apps/frontend/**/*.ts', '!**/node_modules/**', 'packages/**/*.ts') }}
+
+      - name: Build frontend
+        if: steps.cache-build-frontend.outputs.cache-hit != 'true'
+        run: npm run build -w=apps/frontend
+
+      # 2. Build the backend app
       - name: Cache weeklyhackathon-core build output
         id: cache-build-core
         uses: actions/cache@v4

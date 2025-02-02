@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjE2MDk4LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4YUIyMERlOGY1QTRmOGUxNDdCYWFDOUQxZjZlMjM2ODYxNDg1NTE2QSJ9",
+    "payload": "eyJkb21haW4iOiJoYWNrYXRob250b2tlbi5jb20ifQ",
+    "signature": "MHhkM2Q0ZGMzMDA2NmQxYjI1NDk0ZDk1MWE4YmY4OWExNDkzNjJmNzhiYTJjMzk4MDc0YzNmZWUwMWNkMmVhNTM1NmU4YzYyOTY1OWY4MDE0OTQ0MjAwNDY5YzcyOWM1NzYxYzMxOWMzNjI1ZjNkMGI4NTg1YzhkODY3NWFiZjFmNjFj"
+  },
+  "frame": {
+    "version": "0.0.0",
+    "name": "$hackathon",
+    "iconUrl": "https://github.com/jpfraneto/images/blob/main/hackathon.png?raw=true",
+    "homeUrl": "https://weeklyhackathon.com",
+    "imageUrl": "https://github.com/jpfraneto/images/blob/main/hackathon-banner-.png?raw=true",
+    "buttonTitle": "$hackathon",
+    "splashImageUrl": "https://github.com/jpfraneto/images/blob/main/hackathon.png?raw=true",
+    "splashBackgroundColor": "#141414",
+    "webhookUrl": "https://farcaster.anky.bot/weeklyhackathon/framesv2-webhook"
+  }
+}

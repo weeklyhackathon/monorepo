@@ -2,8 +2,8 @@ import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 import { CdpToolkit } from "@coinbase/cdp-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-//import { ChatOpenAI } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatOpenAI } from "@langchain/openai";
+//import { ChatAnthropic } from "@langchain/anthropic";
 import { judgeAgentPrompt, paymentAgentPrompt } from "./constants";
 import { AgentType } from "./types";
 
@@ -16,16 +16,16 @@ async function initializeAgent(agentType: AgentType): { agent: any, config?: any
   if (!validateEnvironment()) return { agent: undefined };
 
   try {   
-    /*
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      model: "",
+      model: "gpt-4o-mini",
     });
-    */
+    /*
     const llm = new ChatAnthropic({
       apiKey: process.env.OPENAI_API_KEY,
       model: "claude-3-5-sonnet-20241022",
     });
+    */
 
     // Get coinbase mpc wallet data from env file
     let walletDataStr: string = process.env.WALLET_DATA_STR || "";

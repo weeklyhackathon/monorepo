@@ -72,7 +72,12 @@
     "apps/*"
   ],
   "dependencies": {
+    "@coinbase/agentkit": "^0.1.1",
+    "@coinbase/cdp-langchain": "^0.0.15",
     "@koa/cors": "^5.0.0",
+    "@langchain/core": "^0.3.37",
+    "@langchain/langgraph": "^0.2.44",
+    "@langchain/openai": "^0.4.2",
     "@prisma/client": "^6.3.0",
     "@typescript-eslint/parser": "^8.19.0",
     "@weeklyhackathon/utils": "^0.0.1",
@@ -87,7 +92,8 @@
     "source-map-support": "^0.5.21",
     "tiktoken": "^1.0.18",
     "tsx": "^4.19.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "viem": "^2.22.19"
   },
   "overrides": {
     "@types/react": "19.0.2",

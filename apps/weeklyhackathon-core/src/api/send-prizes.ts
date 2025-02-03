@@ -1,8 +1,8 @@
 import Router from 'koa-router';
+import { AgentType, initializeAgent, getAgentResponse } from '@weeklyhackathon/agents';
 import { log } from '@weeklyhackathon/utils';
-import { initializeAgent } from '@agents/initializeAgent';
-import { getAgentResponse } from '@agents/getAgentResponse';
-import { AgentType } from '@agents/types';
+import { SendPrizeParams } from '@weeklyhackathon/agents'; 
+
 
 export const sendPrizesRouter = new Router({
   prefix: '/api/send-prizes' // All routes will be prefixed with /tasks
@@ -10,7 +10,7 @@ export const sendPrizesRouter = new Router({
 
 // POST
 sendPrizesRouter.post('/', async (ctx) => {
-  const { amountEth, amountHack, winners } = ctx.request.body;
+  const { amountEth, amountHack, winners } = ctx.request.body as SendPrizeParams;
   
   if ((!amountEth && !amountHack) || !winners) {
     ctx.status = 200;
@@ -25,15 +25,15 @@ sendPrizesRouter.post('/', async (ctx) => {
       and ${amountHack} $hackathon as prizes to that list of winners:
       \n${JSON.stringify(winners)}`;
 
-    const { agent, config } = await initializeAgent(AgentType.payment);
+    const { agent, config } = await initializeAgent(AgentType.Payment);
     
-    if (!agent) {
+    if (!agent || config?.agentType !== AgentType.Payment) {
       ctx.status = 200;
       log.info('Could not initialize the payment agent');
       return;      
     }
     
-    const messages = await getAgentResponse(agent, config);
+    const messages = await getAgentResponse(agent, config, inputText);
 
     if (!messages) {
       ctx.status = 200;

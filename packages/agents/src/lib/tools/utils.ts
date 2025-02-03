@@ -32,3 +32,8 @@ export const getWinners = () => [
     "shares": "3"
   }
 ];
+
+export const getTokenAmounts = () => ({
+  amountEth: 12345, // wei
+  amountHack: 12345 // hackathon 
+});

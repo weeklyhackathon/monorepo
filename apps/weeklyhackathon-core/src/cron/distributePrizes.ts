@@ -1,10 +1,10 @@
-import { getWinners } from '@/packages/agents/tools/utils';
+import { getWinners, getTokenAmounts } from '@weeklyhackathon/agents/tools/utils';
 import { log } from '@weeklyhackathon/utils';
 
-export async function distributePrizes(): void {
+export async function distributePrizes(): Promise<void> {
   log.info('Fetching winners');
 
-  /// fetch winners from database (submissions where timestamp last 7 days and top 8 scores desc)
+  /// TODO: fetch winners from database (submissions where timestamp last 7 days and top 8 scores desc)
   const winners = await getWinners();
   
   if (!winners || winners.length === 0) {
@@ -13,8 +13,14 @@ export async function distributePrizes(): void {
   }
   
   log.info('Claiming hackathon token trading fees');
+
+  /// TODO: fetch real amounts and claim fees from clanker
+  const { amountEth, amountHack } = await getTokenAmounts();
   
-  /// TODO: call the clanker contract to claim the fees and/or get amounts
+  if (!amountEth && !amountHack) {
+    log.info('No amounts found');
+    return;
+  }  
 
   log.info('Distributing prizes');
   

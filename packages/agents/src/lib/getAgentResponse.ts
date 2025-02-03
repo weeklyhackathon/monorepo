@@ -1,4 +1,6 @@
+import { HumanMessage } from "@langchain/core/messages";
 import { log } from "@weeklyhackathon/utils";
+import { Agent, AgentConfig } from "@weeklyhackathon/agents";
 /**
  * Get the agent response
  *
@@ -6,7 +8,7 @@ import { log } from "@weeklyhackathon/utils";
  * @param config - Agent configuration
  * @param input - The input for the agent
  */
-async function getAgentResponse(agent: any, config: any, input: string): Promise<any[]> {
+export async function getAgentResponse(agent: Agent, config: AgentConfig, input: string): Promise<any[]> {
   try {
     const stream = await agent.stream(
       { messages: [new HumanMessage(input)] },

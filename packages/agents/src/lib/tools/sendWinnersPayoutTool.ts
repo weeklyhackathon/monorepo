@@ -1,8 +1,9 @@
-import { Wallet } from "@coinbase/coinbase-sdk";
+import { Amount, Wallet } from "@coinbase/coinbase-sdk";
 import { CdpTool } from "@coinbase/cdp-langchain";
 import { z } from "zod";
 import { getWinners } from "./utils";
 import { Agent, Winner } from "../types";
+import { hackathonAddress, hackathonSymbol } from "../constants";
 import { log } from "@weeklyhackathon/utils";
 
 // Define the prompt for the winners payout tool
@@ -24,17 +25,14 @@ type WinnersPayoutSchema = z.infer<typeof WinnersPayoutInput>;
  * @returns A formatted string containing the summary of all operations
  */
 async function sendWinnersPayout(
-  wallet: Wallet,
+  wallet: any,
   args: WinnersPayoutSchema,
 ): Promise<string> {
   const { token, amount } = args;
-  const winners: Winner[] = [];
-
   if (!token || !amount) return "Error: Missing Token or Amount required fields";
 
   // Fetch current round winners
-  const winners = getWinners();
-
+  const winners: Winner[] = getWinners();
   if (!winners || winners.length === 0) return "Error: Missing Winners";
 
   // Validate each entry has required fields
@@ -42,7 +40,7 @@ async function sendWinnersPayout(
     if (!winner.address || !winner.shares) {
       return "Error: Each winner must have 'address' and 'shares' fields";
     }
-    winner.amount = Math.floor(amount * winner.shares / 100);
+    winner.amount = Math.floor(amount * parseInt(winner.shares) / 100);
   }
 
   let successCount = 0;
@@ -50,10 +48,11 @@ async function sendWinnersPayout(
   let resultText = "";
 
   // Process each payout
-  for (const { wallet_address, amount } of winners) {
+  for (const { address, amount, shares } of winners) {
+    if (!amount) continue;
     try {
       const transfer = await wallet.createTransfer({
-        amount: parseInt(amount),
+        amount: amount as Amount,
         assetId: token === hackathonSymbol.toLowerCase() ? hackathonAddress : token,
         destination: address,
         gasless: token === 'usdc',
@@ -62,14 +61,14 @@ async function sendWinnersPayout(
       await transfer.wait();
 
       resultText +=
-        `\nSuccess: Sent ${amount} to ${wallet_address}` +
+        `\nSuccess: Sent ${amount} of ${token} to ${address} with ${shares} shares` +
         `\nTransaction Hash: ${transfer.getTransactionHash()}` +
         `\nTransaction Link: ${transfer.getTransactionLink()}\n`;
       successCount++;
     } catch (error) {
       log.error(error);
       resultText +=
-        `\nFailure: Could not send ${amount} to ${wallet_address}` +
+        `\nFailure: Could not send ${amount} to ${address}` +
         `\nError\n`;
       failureCount++;
     }
@@ -89,7 +88,7 @@ async function sendWinnersPayout(
   return summary;
 }
 
-export function getSendWinnersPayoutTool(agentkit: Agent): CdpTool {
+export function getWinnersPayoutTool(agentkit: Agent) {
   // Create the CdpTool instance
   return new CdpTool(
     {

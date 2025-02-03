@@ -1,12 +1,13 @@
-import { AgentkitOptions, CdpAgentkit } from "@coinbase/cdp-agentkit-core";
+import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 import { CdpToolkit } from "@coinbase/cdp-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 //import { ChatAnthropic } from "@langchain/anthropic";
 import { log } from "@weeklyhackathon/utils";
-import { validateAgentEnv } from "@packages/utils/src/lib/env.ts";
-import { judgeAgentPrompt, paymentAgentPrompt } from "./constants";
+import { validateAgentEnv } from "@weeklyhackathon/utils";
+import { getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
+import { hackerAgentPrompt, judgeAgentPrompt, paymentAgentPrompt } from "./constants";
 import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
 
 /**
@@ -14,8 +15,8 @@ import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
  *
  * @returns Agent executor and config
  */
-async function initializeAgent(agentType: AgentType): AgentWithConfig | undefined {
-  if (!validateAgentEnv()) return undefined;
+export async function initializeAgent(agentType: AgentType): Promise<AgentWithConfig> {
+  if (!validateAgentEnv()) return {};
 
   try {   
     const llm = new ChatOpenAI({
@@ -32,7 +33,7 @@ async function initializeAgent(agentType: AgentType): AgentWithConfig | undefine
     // Get coinbase mpc wallet data from env file
     let walletDataStr: string = process.env.WALLET_DATA_STR || "";
     // Configure CDP Agentkit
-    const config: AgentkitOptions = {
+    const config = {
       cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
@@ -45,11 +46,13 @@ async function initializeAgent(agentType: AgentType): AgentWithConfig | undefine
     const tools = cdpToolkit.getTools();
 
     // Add Custom Tools
-    if (agentType === AgentType.payment) {
+    if (agentType === AgentType.Payment) {
       // Get an instance of the winners payout tool
-      const winnersPayoutTool = getWinnersPayoutTool();
-      // Add the tool to your toolkit
+      const winnersPayoutTool = getWinnersPayoutTool(agentkit);
+      const claimClankerRewardsTool = getClaimClankerRewardsTool(agentkit);
+      // Add the tools to your toolkit
       tools.push(winnersPayoutTool);    
+      tools.push(claimClankerRewardsTool);
     }
 
     // Store buffered conversation history in memory
@@ -64,15 +67,15 @@ async function initializeAgent(agentType: AgentType): AgentWithConfig | undefine
       llm,
       tools,
       checkpointSaver: memory,
-      messageModifier: agentType === "payment" ? 
-        paymentAgentPrompt : 
-          task === "judge" ? 
-            judgeAgentPrompt : ""
+      messageModifier:
+       agentType === AgentType.Payment ? paymentAgentPrompt : 
+       agentType === AgentType.Judge ? judgeAgentPrompt : 
+       agentType === AgentType.Hacker ? hackerAgentPrompt : ""
     });
 
     return { agent, config: agentConfig };
   } catch (error) {
     log.error("Failed to initialize agent:", error);
   }
-  return undefined;
+  return {};
 }

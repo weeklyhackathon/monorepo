@@ -1,3 +1,4 @@
+import { log } from "@weeklyhackathon/utils";
 /**
  * Validates that required environment variables are set
  *
@@ -19,14 +20,14 @@ export function validateEnvironment(): boolean {
   if (missingVars.length > 0) {
     console.error("Error: Required environment variables are not set");
     missingVars.forEach((varName) => {
-      console.error(`${varName}=your_${varName.toLowerCase()}_here`);
+      log.error(`${varName}=your_${varName.toLowerCase()}_here`);
     });
     return false;
   }
 
   // Warn about optional NETWORK_ID
   if (!process.env.NETWORK_ID) {
-    console.warn(
+    log.warn(
       "Warning: NETWORK_ID not set, defaulting to base-sepolia testnet",
     );
   }

@@ -2,7 +2,8 @@ import { Wallet } from "@coinbase/coinbase-sdk";
 import { CdpTool } from "@coinbase/cdp-langchain";
 import { z } from "zod";
 import { getWinners } from "./utils";
-import { Winner } from "../types";
+import { Agent, Winner } from "../types";
+import { log } from "@weeklyhackathon/utils";
 
 // Define the prompt for the winners payout tool
 const WINNERS_PAYOUT_PROMPT = "Transfer any 'amount' of the 'token' to a list of well known recipients extracted from the 'winners.json' file";
@@ -66,7 +67,7 @@ async function sendWinnersPayout(
         `\nTransaction Link: ${transfer.getTransactionLink()}\n`;
       successCount++;
     } catch (error) {
-      console.log(error);
+      log.error(error);
       resultText +=
         `\nFailure: Could not send ${amount} to ${wallet_address}` +
         `\nError\n`;
@@ -84,11 +85,11 @@ async function sendWinnersPayout(
     "\nDetailed Results:\n" +
     "================\n" +
     resultText;
-
+  log.info(summary);
   return summary;
 }
 
-export function getSendWinnersPayoutTool(agentkit: any): CdpTool {
+export function getSendWinnersPayoutTool(agentkit: Agent): CdpTool {
   // Create the CdpTool instance
   return new CdpTool(
     {

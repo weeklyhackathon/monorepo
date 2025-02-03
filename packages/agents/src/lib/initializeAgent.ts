@@ -1,28 +1,30 @@
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
+import { AgentkitOptions, CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 import { CdpToolkit } from "@coinbase/cdp-langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 //import { ChatAnthropic } from "@langchain/anthropic";
+import { log } from "@weeklyhackathon/utils";
+import { validateAgentEnv } from "@packages/utils/src/lib/env.ts";
 import { judgeAgentPrompt, paymentAgentPrompt } from "./constants";
-import { AgentType } from "./types";
+import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
 
 /**
  * Initialize the agent with CDP Agentkit
  *
  * @returns Agent executor and config
  */
-async function initializeAgent(agentType: AgentType): { agent: any, config?: any } {
-  if (!validateEnvironment()) return { agent: undefined };
+async function initializeAgent(agentType: AgentType): AgentWithConfig | undefined {
+  if (!validateAgentEnv()) return undefined;
 
   try {   
     const llm = new ChatOpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY as string,
       model: "gpt-4o-mini",
     });
     /*
     const llm = new ChatAnthropic({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY as string,
       model: "claude-3-5-sonnet-20241022",
     });
     */
@@ -30,7 +32,7 @@ async function initializeAgent(agentType: AgentType): { agent: any, config?: any
     // Get coinbase mpc wallet data from env file
     let walletDataStr: string = process.env.WALLET_DATA_STR || "";
     // Configure CDP Agentkit
-    const config = {
+    const config: AgentkitOptions = {
       cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
@@ -43,7 +45,7 @@ async function initializeAgent(agentType: AgentType): { agent: any, config?: any
     const tools = cdpToolkit.getTools();
 
     // Add Custom Tools
-    if (agentType === "payment") {
+    if (agentType === AgentType.payment) {
       // Get an instance of the winners payout tool
       const winnersPayoutTool = getWinnersPayoutTool();
       // Add the tool to your toolkit
@@ -70,7 +72,7 @@ async function initializeAgent(agentType: AgentType): { agent: any, config?: any
 
     return { agent, config: agentConfig };
   } catch (error) {
-    console.log("Failed to initialize agent:", error);
+    log.error("Failed to initialize agent:", error);
   }
-  return { agent: undefined };
+  return undefined;
 }

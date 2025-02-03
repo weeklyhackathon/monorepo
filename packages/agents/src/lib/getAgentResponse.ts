@@ -1,3 +1,4 @@
+import { log } from "@weeklyhackathon/utils";
 /**
  * Get the agent response
  *
@@ -22,12 +23,12 @@ async function getAgentResponse(agent: any, config: any, input: string): Promise
       }
     }
     
-    console.log(agentResponses);
+    log.log(agentResponses);
     
     return agentResponses;
   } catch (error) {
     if (error instanceof Error) {
-      console.log("Error:", error.message);
+      log.error("Error:", error.message);
     }
   }
   return [];

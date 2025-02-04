@@ -1,29 +1,157 @@
 import Router from "koa-router";
 import { env, log, POST, GET } from "@weeklyhackathon/utils";
+import { prisma } from "@weeklyhackathon/db";
+import { FrameContext } from "@weeklyhackathon/telegram/types";
 
 export const authRouter = new Router({
   prefix: "/api/auth",
 });
 
-// GitHub OAuth callback
+authRouter.get("/health", async (ctx) => {
+  ctx.body = {
+    status: "ok",
+  };
+});
+
+authRouter.post("/register-frame-opened", async (ctx) => {
+  const { frameContext } = ctx.request.body as { frameContext: FrameContext };
+  log.info("📝 Received frame context:", frameContext);
+
+  // Generate a random token
+  const authToken =
+    Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+  // Create user if doesn't exist
+  const user = await prisma.user.upsert({
+    where: { path: `fc_${frameContext.user.fid}` },
+    create: {
+      path: `fc_${frameContext.user.fid}`,
+      displayName: frameContext.user.username,
+      farcasterUser: {
+        create: {
+          farcasterId: frameContext.user.fid,
+          username: frameContext.user.username,
+        },
+      },
+    },
+    update: {},
+  });
+
+  log.info("🔑 Generated auth token:", authToken);
+  log.info("💾 Stored frame context for later use");
+
+  ctx.body = {
+    authToken,
+  };
+});
+
+authRouter.post("/register-gh-login", async (ctx) => {
+  const { frameContext, authToken } = ctx.request.body as {
+    frameContext: FrameContext;
+    authToken: string;
+  };
+
+  // Verify user exists
+  const user = await prisma.user.findFirst({
+    where: {
+      path: `fc_${frameContext.user.fid}`,
+      farcasterUser: {
+        farcasterId: frameContext.user.fid,
+      },
+    },
+  });
+
+  if (!user) {
+    ctx.status = 401;
+    ctx.body = { error: "Invalid user or frame context mismatch" };
+    return;
+  }
+
+  log.info("✅ Verified user and frame context match");
+
+  // Generate second auth token for GitHub flow
+  const secondAuthToken =
+    Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+  log.info("🔑 Generated second auth token:", secondAuthToken);
+
+  ctx.body = {
+    secondAuthToken,
+  };
+});
+
+authRouter.post("/get-farcaster-user-information", async (ctx) => {
+  log.info("🔍 Getting Farcaster user information...");
+
+  const { fid } = ctx.request.body as {
+    fid: number;
+  };
+
+  // Get user and farcaster information
+  const user = await prisma.user.findFirst({
+    where: {
+      path: `fc_${fid}`,
+      farcasterUser: {
+        farcasterId: fid,
+      },
+    },
+    include: {
+      farcasterUser: true,
+    },
+  });
+
+  if (!user) {
+    log.info("❌ User not found");
+    ctx.status = 404;
+    ctx.body = { error: "User not found" };
+    return;
+  }
+
+  log.info("✅ Found user information");
+
+  // Construct frame context from stored user data
+  const frameContext = {
+    user: {
+      fid: user.farcasterUser!.farcasterId,
+      username: user.farcasterUser!.username,
+      displayName: user.displayName,
+    },
+  };
+
+  ctx.body = {
+    frameContext,
+  };
+
+  log.info("📤 Returning frame context for FID:", fid);
+});
+
 authRouter.post("/github/callback", async (ctx) => {
   try {
-    log.info("🎯 GitHub callback initiated");
-    const { code, fid } = ctx.request.body as { code: string; fid: number };
-    log.info("📝 Received github code and FID:", {
-      code: code?.slice(0, 8),
-      fid,
+    const { code, state } = ctx.request.body as {
+      code: string;
+      state: string;
+    };
+
+    // Decode the state parameter to get our tokens
+    const { fid } = JSON.parse(atob(state));
+
+    // Verify the user exists
+    const user = await prisma.user.findFirst({
+      where: {
+        path: `fc_${fid}`,
+        farcasterUser: {
+          farcasterId: fid,
+        },
+      },
     });
 
-    if (!code) {
-      log.info("❌ No code provided in request");
-      ctx.status = 400;
-      ctx.body = { error: "No code provided" };
+    if (!user) {
+      ctx.status = 401;
+      ctx.body = { error: "Invalid user" };
       return;
     }
 
-    // Exchange the code for an access token
-    log.info("🔄 Exchanging code for access token...");
+    // Exchange code for access token
     const tokenResponse = (await POST({
       url: "https://github.com/login/oauth/access_token",
       headers: {
@@ -37,22 +165,42 @@ authRouter.post("/github/callback", async (ctx) => {
     })) as { access_token: string };
 
     if (!tokenResponse.access_token) {
-      log.info("❌ Failed to get access token from GitHub");
-      ctx.status = 400;
-      ctx.body = { error: "Failed to get access token" };
-      return;
+      throw new Error("Failed to get access token");
     }
 
-    log.info("✅ Successfully received access token");
+    // Get GitHub user data
+    const githubUser = await GET({
+      url: "https://api.github.com/user",
+      headers: {
+        Authorization: `Bearer ${tokenResponse.access_token}`,
+      },
+    });
 
-    // If we have an FID, store the connection
-    if (fid) {
-      log.info("🔗 Storing GitHub connection for FID:", fid);
-      // TODO: Store the connection in the database
-    }
+    // Update user with GitHub information
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        githubUser: {
+          upsert: {
+            create: {
+              githubId: githubUser.id,
+              username: githubUser.login,
+            },
+            update: {
+              username: githubUser.login,
+            },
+          },
+        },
+      },
+      include: {
+        farcasterUser: true,
+        githubUser: true,
+      },
+    });
 
     ctx.body = {
       access_token: tokenResponse.access_token,
+      user: updatedUser,
     };
   } catch (error) {
     log.error("💥 Error in GitHub callback:", error);
@@ -64,7 +212,6 @@ authRouter.post("/github/callback", async (ctx) => {
   }
 });
 
-// Check GitHub connection
 authRouter.get("/github/check-connection", async (ctx) => {
   log.info("🔍 Checking GitHub connection");
   const fid = ctx.query.fid as string;
@@ -76,36 +223,28 @@ authRouter.get("/github/check-connection", async (ctx) => {
     return;
   }
 
-  log.info("🔎 Looking up connection for FID:", fid);
-  // TODO: Look up the connection in the database
-
-  const connection = {
-    github_token: "1234567890",
-    connected_at: "2021-01-01T00:00:00Z",
-  };
-
-  // Verify the token is still valid
-  try {
-    log.info("🔄 Verifying GitHub token validity");
-    await GET({
-      url: "https://api.github.com/user",
-      headers: {
-        Authorization: `Bearer ${connection.github_token}`,
+  const user = await prisma.user.findFirst({
+    where: {
+      path: `fc_${fid}`,
+      farcasterUser: {
+        farcasterId: parseInt(fid),
       },
-    });
+    },
+    include: {
+      githubUser: true,
+    },
+  });
 
-    log.info("✅ GitHub token is valid");
-    ctx.body = {
-      isConnected: true,
-      github_token: connection.github_token,
-    };
-  } catch (error) {
-    log.info("🗑️ Token invalid");
+  if (!user?.githubUser) {
     ctx.body = { isConnected: false };
+    return;
   }
+
+  ctx.body = {
+    isConnected: true,
+  };
 });
 
-// Get GitHub user data
 authRouter.get("/github/user", async (ctx) => {
   try {
     log.info("👤 Fetching GitHub user data");
@@ -127,8 +266,6 @@ authRouter.get("/github/user", async (ctx) => {
         Authorization: `Bearer ${token}`,
       },
     });
-
-    // TODO: Cross check this user response with the database
 
     log.info("✅ Successfully retrieved GitHub user data");
     ctx.body = userResponse;

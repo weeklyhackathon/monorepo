@@ -51,11 +51,30 @@ class ErrorBoundary extends Component<
 function Root() {
   console.log("Rendering Root component");
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [authToken, setAuthToken] = useState("");
 
   useEffect(() => {
     const load = async () => {
+      const frameContext = await sdk.context;
+      if (frameContext.user.fid) {
+        const responseFromServer = await fetch(
+          `${import.meta.env.VITE_SERVER_URL}/api/auth/register-frame-opened`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": import.meta.env.VITE_API_KEY,
+            },
+            body: JSON.stringify({
+              frameContext,
+            }),
+          }
+        );
+        const data = await responseFromServer.json();
+        console.log("RESPONSE FROM SERVER: ", data);
+        setAuthToken(data.authToken);
+      }
       sdk.actions.ready();
-      await sdk.actions.addFrame();
     };
     if (sdk && !isSDKLoaded) {
       setIsSDKLoaded(true);
@@ -70,7 +89,7 @@ function Root() {
           <div className="flex flex-col h-screen">
             <div className="flex-1 overflow-auto">
               <Routes>
-                <Route path="/" element={<App />} />
+                <Route path="/" element={<App authToken={authToken} />} />
               </Routes>
             </div>
             {/* <TabBar /> */}

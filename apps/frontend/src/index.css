@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "MEKSans-Italic";
+  src: url("./assets/fonts/MEKSans-Italic.otf") format("opentype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MEKSans-Regular";
+  src: url("./assets/fonts/MEKSans-Regular.otf") format("opentype");
+  font-display: swap;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

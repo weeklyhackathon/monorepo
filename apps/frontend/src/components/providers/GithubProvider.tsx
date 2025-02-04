@@ -25,39 +25,24 @@ interface GitHubContextType {
 const GitHubContext = createContext<GitHubContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_SERVER_URL;
-
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI;
 
-console.log("GitHub OAuth credentials:", {
-  GITHUB_CLIENT_ID,
-  GITHUB_REDIRECT_URI,
-});
-
 export function GitHubProvider({ children }: { children: ReactNode }) {
-  console.log("Rendering GitHubProvider");
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    console.log("GitHubProvider useEffect running");
-    // Check for auth code in URL
     const queryParams = new URLSearchParams(location.search);
     const code = queryParams.get("code");
-    console.log("Auth code from URL:", code);
+    const state = queryParams.get("state");
 
-    if (code) {
-      console.log("Found auth code, handling callback");
-      handleGitHubCallback(code);
+    if (code && state) {
+      handleGitHubCallback(code, state);
     } else {
-      // Check if we have an existing token
       const token = localStorage.getItem("github_token");
-      console.log(
-        "Checking for existing token:",
-        token ? "Found" : "Not found"
-      );
       if (token) {
         fetchUserData(token);
       } else {
@@ -66,42 +51,45 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
     }
   }, [location]);
 
-  const handleGitHubCallback = async (code: string) => {
-    console.log("Handling GitHub callback with code:", code);
+  const handleGitHubCallback = async (code: string, state: string) => {
     try {
       setIsLoading(true);
-      // Exchange code for access token
-      console.log("Making request to exchange code for token");
+
+      // Decode the state parameter to get our stored context
+      const { authToken, secondAuthToken, fid } = JSON.parse(atob(state));
+
       const response = await fetch(`${API_URL}/api/auth/github/callback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_API_KEY,
         },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({
+          code,
+          authToken,
+          secondAuthToken,
+          fid,
+        }),
       });
 
       const data = await response.json();
-      console.log(
-        "Received token response:",
-        data.access_token ? "Success" : "Failed"
-      );
 
       if (data.access_token) {
         localStorage.setItem("github_token", data.access_token);
-        console.log("Token stored in localStorage");
         await fetchUserData(data.access_token);
-        console.log("Navigating to home page");
         navigate("/"); // Redirect to home page after successful login
+      } else {
+        throw new Error("Failed to get access token");
       }
     } catch (error) {
       console.error("Error during GitHub authentication:", error);
+      // Handle error appropriately
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchUserData = async (token: string) => {
-    console.log("Fetching user data");
     try {
       const response = await fetch("https://api.github.com/user", {
         headers: {
@@ -111,11 +99,8 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log("User data fetched successfully:", userData);
         setUser(userData);
       } else {
-        console.log("Invalid token, clearing user data");
-        // Token might be invalid
         localStorage.removeItem("github_token");
         setUser(null);
       }
@@ -127,24 +112,29 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
   };
 
   const login = () => {
-    console.log("Initiating GitHub login");
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=read:user`;
-    console.log("Redirecting to GitHub auth URL:", githubAuthUrl);
+    const queryParams = new URLSearchParams(location.search);
+    const authToken = queryParams.get("authToken");
+    const secondAuthToken = queryParams.get("secondAuthToken");
+    const fid = queryParams.get("fid");
+
+    // Store auth context in state parameter
+    const state = btoa(
+      JSON.stringify({
+        authToken,
+        secondAuthToken,
+        fid,
+      })
+    );
+
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=read:user&state=${state}`;
     window.location.href = githubAuthUrl;
   };
 
   const logout = () => {
-    console.log("Logging out user");
     localStorage.removeItem("github_token");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
-
-  console.log("Current GitHub context state:", {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-  });
 
   return (
     <GitHubContext.Provider
@@ -161,12 +151,9 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use GitHub context
 export function useGitHub() {
-  console.log("useGitHub hook called");
   const context = useContext(GitHubContext);
   if (context === undefined) {
-    console.error("useGitHub must be used within a GitHubProvider");
     throw new Error("useGitHub must be used within a GitHubProvider");
   }
   return context;

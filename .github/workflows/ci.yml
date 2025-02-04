@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.13.1
-          cache: 'npm'
+          cache: "npm"
       - name: Cache node_modules
         id: cache-nodemodules
         uses: actions/cache@v4
@@ -33,10 +33,8 @@ jobs:
         if: steps.cache-nodemodules.outputs.cache-hit != 'true'
         run: npm ci
 
-
       - name: Typecheck
         run: npm run typecheck
-
 
       # 1. Build the frontend app
       - name: Cache frontend build output
@@ -61,7 +59,6 @@ jobs:
       - name: Build weeklyhackathon-core
         if: steps.cache-build-core.outputs.cache-hit != 'true'
         run: npm run build -w=apps/weeklyhackathon-core
-
 
       # Prepare docker
       - name: Cache Docker image
@@ -131,7 +128,6 @@ jobs:
           done
           echo "Container did not become healthy in time."
           exit 1
-
 
       - name: Setup test database
         run: |

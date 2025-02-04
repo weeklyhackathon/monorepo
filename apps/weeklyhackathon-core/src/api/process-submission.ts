@@ -4,12 +4,12 @@ import { log } from '@weeklyhackathon/utils';
 import { ProcessSubmissionParams } from '@weeklyhackathon/agents'; 
 
 
-export const sendPrizesRouter = new Router({
-  prefix: '/api/process-submission' // All routes will be prefixed with /tasks
+export const processSubmissionsRouter = new Router({
+  prefix: '/api/process-submission'
 });
 
 // POST
-sendPrizesRouter.post('/', async (ctx) => {
+processSubmissionsRouter.post('/', async (ctx) => {
   const { submission } = ctx.request.body as ProcessSubmissionParams;
   
   if (!submission) {
@@ -18,10 +18,13 @@ sendPrizesRouter.post('/', async (ctx) => {
     return;
   }
   
+  log.info('Summarizing current submission');
+  log.log(submission);
+  
   try {
     // Handle summarize submission with the hacker agent 
     const inputText = 
-      `Write the most wonderful summary highlighting the features of the following flat file of a git pull request
+      `Write the most wonderful summary highlighting the features of the following flat file of a git pull request (don't use  tools)
       \n${submission.flatFilePR}`;
 
     const { agent: hackerAgent, config: hackerConfig } = await initializeAgent(AgentType.Hacker);
@@ -40,9 +43,7 @@ sendPrizesRouter.post('/', async (ctx) => {
       return;      
     }
 
-    log.log(hackerMessages);
-    // Handle judge submission with the judge agent     
-    
+    // Handle judge submission with the judge agent    
     const { agent: judgeAgent, config: judgeConfig  } = await initializeAgent(AgentType.Judge); 
 
     if (!judgeAgent || judgeConfig?.agentType !== AgentType.Judge) {
@@ -51,9 +52,23 @@ sendPrizesRouter.post('/', async (ctx) => {
       return;      
     }
 
-    const judgeMessages = await getAgentResponse(judgeAgent, judgeConfig, JSON.stringify(hackerMessages));       
+    const judgeMessages = await getAgentResponse(
+      judgeAgent, 
+      judgeConfig, 
+      submission.flatFilePR+"\n"+JSON.stringify(hackerMessages)
+    );
     
-    return judgeMessages;
+    log.log(judgeMessages[0]);
+    try {
+      const jjj = JSON.parse(judgeMessages[0]);
+      log.info('parsed');
+      log.log(jjj);
+    } catch (err) {
+      log.error(err);
+    }
+    
+    ctx.body = judgeMessages[0];
+    return;
   } catch (error) {
     log.error('Error in POST /api/send-prizes');
     log.error(error);

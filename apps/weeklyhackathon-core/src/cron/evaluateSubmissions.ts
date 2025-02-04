@@ -1,5 +1,5 @@
 import { getHackerSubmissions } from '@weeklyhackathon/agents/tools/utils';
-import { log } from '@weeklyhackathon/utils';
+import { env, log } from '@weeklyhackathon/utils';
 
 export async function evaluateSubmissions(): Promise<void> {
   log.info('Feching submissions');
@@ -14,11 +14,12 @@ export async function evaluateSubmissions(): Promise<void> {
   
   log.info('Evaluating submissions'); 
 
-  for (const submission in submissions) {
-    const response = await fetch('/api/process-submission', {
+  for (const submission of submissions) {
+    const response = await fetch(env.DOMAIN+'/api/process-submission', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': env.APP_API_KEY
       },
       body: JSON.stringify({
         submission
@@ -28,7 +29,15 @@ export async function evaluateSubmissions(): Promise<void> {
       log.error(`${response.status} - ${response.statusText}`);
     } else {
       log.info('Hacker submission processed');  
-      /// TODO update database with the score of the submission
+      const { score } = await response?.json();
+      if (!score) {
+        log.info('No score found');
+        return;
+      }
+      log.info('Current Hacker score');  
+      log.log(score);
+      /// TODO: store hacker score in database 
+      log.info('Hacker score stored in database'); 
     }
   }
 

@@ -11,7 +11,7 @@ app.listen(port, host, () => {
   log.info(`[ ready ] http://${host}:${port}`);
 });
 
-//startCronJobs();
+startCronJobs();
 
 //configureBot();
 

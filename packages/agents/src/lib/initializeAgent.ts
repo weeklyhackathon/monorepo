@@ -19,6 +19,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
   if (!validateAgentEnv()) return {};
 
   try {   
+    
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY as string,
       model: "gpt-4o-mini",

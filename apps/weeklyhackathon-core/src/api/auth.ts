@@ -3,6 +3,11 @@ import { env, log, POST, GET } from "@weeklyhackathon/utils";
 import { prisma } from "@weeklyhackathon/db";
 import { FrameContext } from "@weeklyhackathon/telegram/types";
 
+interface GitHubUserResponse {
+  id: number;
+  login: string;
+}
+
 export const authRouter = new Router({
   prefix: "/api/auth",
 });
@@ -26,11 +31,13 @@ authRouter.post("/register-frame-opened", async (ctx) => {
     where: { path: `fc_${frameContext.user.fid}` },
     create: {
       path: `fc_${frameContext.user.fid}`,
-      displayName: frameContext.user.username,
+      displayName:
+        frameContext.user.username ?? frameContext.user.fid.toString(),
       farcasterUser: {
         create: {
           farcasterId: frameContext.user.fid,
-          username: frameContext.user.username,
+          username:
+            frameContext.user.username ?? frameContext.user.fid.toString(),
         },
       },
     },
@@ -169,12 +176,12 @@ authRouter.post("/github/callback", async (ctx) => {
     }
 
     // Get GitHub user data
-    const githubUser = await GET({
+    const githubUser = (await GET({
       url: "https://api.github.com/user",
       headers: {
         Authorization: `Bearer ${tokenResponse.access_token}`,
       },
-    });
+    })) as GitHubUserResponse;
 
     // Update user with GitHub information
     const updatedUser = await prisma.user.update({
@@ -185,9 +192,11 @@ authRouter.post("/github/callback", async (ctx) => {
             create: {
               githubId: githubUser.id,
               username: githubUser.login,
+              accessToken: tokenResponse.access_token,
             },
             update: {
               username: githubUser.login,
+              accessToken: tokenResponse.access_token,
             },
           },
         },

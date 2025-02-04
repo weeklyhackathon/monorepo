@@ -14,7 +14,6 @@ export async function distributePrizes(): Promise<void> {
   
   log.info('Claiming hackathon token trading fees');
 
-  /// TODO: fetch real amounts and claim fees from clanker
   const { amountEth, amountHack } = await getTokenAmounts();
   
   if (!amountEth && !amountHack) {

@@ -1,5 +1,4 @@
 import { AgentKitOptions } from "@coinbase/agentkit";
-//import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 
 export enum AgentType {
   Judge = "judge",
@@ -21,4 +20,23 @@ export type SendPrizeParams = {
   amountEth: string, 
   amountHack: string, 
   winners: Winner[] 
+}
+
+export type ProcessSubmissionParams = {
+  submission: Submission;
+}
+
+export type Submission = {
+  hackerAgentResponse?: string;
+  flatFilePR: string;
+}
+
+export type ClaimedRewardsLog = {
+  claimer: string;
+  token0: string;
+  token1: string;
+  amount0: bigint;
+  amount1: bigint;
+  totalAmount1: bigint;
+  totalAmount0: bigint;
 }

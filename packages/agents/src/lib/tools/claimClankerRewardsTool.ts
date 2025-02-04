@@ -1,14 +1,14 @@
-import { Abi, createPublicClient, createWalletClient, decodeEventLog, http, parseEther } from 'viem'
-import { base } from 'viem/chains'
-import { privateKeyToAccount } from 'viem/accounts'
+import { Abi, createPublicClient, createWalletClient, decodeEventLog, http, parseEther } from 'viem';
+import { base } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
 import { CdpTool } from "@coinbase/cdp-langchain";
-import { Agent } from "../types";
+import { Agent, ClaimedRewardsLog } from "../types";
 import { hackathonAddress, hackathonSymbol } from "../constants";
 import { log } from "@weeklyhackathon/utils";
 import { z } from "zod";
 
 // Define the prompt for the winners payout tool
-const CLAIM_REWARDS_PROMPT = "Call the 'claimRewards' function to claim the trading fees of the hackathon token to fund the hackathon prizes.";
+const CLAIM_REWARDS_PROMPT = "Call the 'claimRewards' function to claim the trading fees of the hackathon token from the clanker platform to fund the hackathon prizes.";
 
 const ClaimRewardsInput = z.object({});
 type ClaimRewardsSchema = z.infer<typeof ClaimRewardsInput>;
@@ -37,15 +37,6 @@ const claimRewardsAbi: Abi = [
   }
 ] as const;
 
-interface ClaimedRewardsLog {
-  claimer: string;
-  token0: string;
-  token1: string;
-  amount0: bigint;
-  amount1: bigint;
-  totalAmount1: bigint;
-  totalAmount0: bigint;
-}
 
 /**
  * Claim clanker rewards of the hackathon token

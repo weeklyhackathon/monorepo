@@ -37,3 +37,18 @@ export const getTokenAmounts = () => ({
   amountEth: 12345, // wei
   amountHack: 12345 // hackathon 
 });
+
+export const getHackerSubmissions = () => [
+  { 
+    flatFilePR: "export const myRandomNumber = Math.floor(Math.random() * 69420);",
+    hackerAgentResponse: ""
+  },
+  { 
+    flatFilePR: "export const myRandomNumber = Math.floor(Math.random() * 69420);import { myRandomNumber } from './random';function getRandomNumber() { return randomNumber };",
+    hackerAgentResponse: ""
+  },
+  { 
+    flatFilePR: "console.log('hello world');",
+    hackerAgentResponse: ""
+  }
+];

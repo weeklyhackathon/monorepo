@@ -1,4 +1,5 @@
 import { setTelegramBotWebhook } from '@weeklyhackathon/telegram';
+//import { createSchema, writeToNodes, readFromNodes } from '@weeklyhackathon/agents/nillionVault';
 import { log, env } from '@weeklyhackathon/utils';
 import { startCronJobs } from './cron';
 import { app } from './server';
@@ -11,9 +12,18 @@ app.listen(port, host, () => {
   log.info(`[ ready ] http://${host}:${port}`);
 });
 
+
 startCronJobs();
 
+
 configureBot();
+
+
+/// must run this once to set up the nillion vault 
+/// create the schema and write the PK secret in the vault
+/// (it was already done, just ignore it)
+//createSchema();
+//writeToNodes();
 
 async function configureBot() {
   const webhookUrl = `${env.DOMAIN}/api/chat-telegram`;

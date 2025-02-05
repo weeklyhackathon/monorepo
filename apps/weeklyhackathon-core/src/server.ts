@@ -3,6 +3,8 @@ import koa from 'koa';
 import koaBody from 'koa-bodyparser';
 import { env, log } from '@weeklyhackathon/utils';
 import { telegramChatRouter } from './api/chat-telegram';
+import { processSubmissionsRouter } from './api/process-submission';
+import { sendPrizesRouter } from './api/send-prizes';
 import { healthRouter } from './health';
 
 export const app = new koa();
@@ -54,3 +56,5 @@ app.use(async (ctx, next) => {
 
 
 app.use(telegramChatRouter.routes());
+app.use(processSubmissionsRouter.routes());
+app.use(sendPrizesRouter.routes());

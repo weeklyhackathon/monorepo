@@ -1,74 +1,33 @@
+// App.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useGitHub } from "./components/providers/GithubProvider";
-import "./App.css";
-import {
-  FrameContext,
-  useFarcaster,
-} from "./components/providers/FarcasterProvider";
+import { GithubUser, useGitHub } from "./components/providers/GithubProvider";
+import { FrameContext } from "./components/providers/FarcasterProvider";
+import HackerDashboard from "./components/HackerDashboard";
 
-function App({ authToken }: { authToken: string }) {
-  const { user, isLoading, isAuthenticated, login, logout } = useGitHub();
+function App({
+  authToken,
+  frameContext,
+  githubUser,
+}: {
+  authToken: string;
+  frameContext: FrameContext | undefined;
+  githubUser: GithubUser | null;
+}) {
+  const { user, isLoading, login } = useGitHub();
   const location = useLocation();
   const navigate = useNavigate();
-  const [githubUser, setGithubUser] = useState(user);
-  const [frameContextOutsideFrame, setFrameContextOutsideFrame] =
-    useState<FrameContext | null>(null);
-  const { frameContext } = useFarcaster();
+  const [error, setError] = useState<string | null>(null);
 
-  // Effect to handle initial load and auth flow
+  // Handle GitHub OAuth callback
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const code = queryParams.get("code");
-    const fid = queryParams.get("fid");
-    const authToken = queryParams.get("authToken");
-    const secondAuthToken = queryParams.get("secondAuthToken");
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code");
 
     if (code) {
-      // Let the GitHub provider handle the OAuth callback
       navigate("/profile", { replace: true });
-      return;
-    }
-
-    if (authToken && secondAuthToken && fid) {
-      fetchFarcasterUser(authToken, secondAuthToken, fid);
     }
   }, [location, navigate]);
-
-  const fetchFarcasterUser = async (
-    authToken: string,
-    secondAuthToken: string,
-    fid: string
-  ) => {
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_SERVER_URL
-        }/api/auth/get-farcaster-user-information`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": import.meta.env.VITE_API_KEY,
-          },
-          body: JSON.stringify({
-            fid,
-            authToken,
-            secondAuthToken,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch Farcaster user");
-      }
-
-      const data = await response.json();
-      setFrameContextOutsideFrame(data.frameContext);
-    } catch (error) {
-      console.error("Error fetching Farcaster user:", error);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -78,8 +37,22 @@ function App({ authToken }: { authToken: string }) {
     );
   }
 
-  // Handle Frame Context UI
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  // Frame View - Show Connect Button
   if (frameContext?.user.fid) {
+    if (githubUser && githubUser.username) {
+      return (
+        <HackerDashboard frameContext={frameContext} githubUser={githubUser} />
+      );
+    }
+
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-[#2DFF05] flex flex-col items-center">
@@ -104,102 +77,116 @@ function App({ authToken }: { authToken: string }) {
                   }
                 );
 
-                if (!response.ok) {
+                if (!response.ok)
                   throw new Error("Failed to register GitHub login");
-                }
 
-                const data = await response.json();
-                window.location.href = `${
-                  import.meta.env.VITE_BASE_URL
-                }?authToken=${authToken}&secondAuthToken=${
-                  data.secondAuthToken
-                }&fid=${frameContext?.user.fid}`;
+                const { secondAuthToken } = await response.json();
+
+                // Open web view with auth parameters
+                window.open(
+                  `${
+                    import.meta.env.VITE_BASE_URL
+                  }?authToken=${authToken}&secondAuthToken=${secondAuthToken}&fid=${
+                    frameContext.user.fid
+                  }`,
+                  "_blank"
+                );
               } catch (error) {
-                console.error("Error registering GitHub login:", error);
+                setError(
+                  error instanceof Error ? error.message : "Unknown error"
+                );
               }
             }}
             className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
           >
-            Login with GitHub
+            Connect GitHub Account
           </button>
           <small className="mt-4 text-xs text-gray-400">
-            this will open a new tab, where you need to login with your github
-            account
+            This will open a new tab for GitHub authentication
           </small>
         </div>
       </div>
     );
   }
 
-  // Handle GitHub auth UI
-  if (!isAuthenticated && !githubUser) {
+  // Web View - Show Farcaster Info and GitHub Connect Button
+  const params = new URLSearchParams(location.search);
+  const urlAuthToken = params.get("authToken");
+  const urlSecondAuthToken = params.get("secondAuthToken");
+  const urlFid = params.get("fid");
+
+  if (urlAuthToken && urlSecondAuthToken && urlFid && !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-[#2DFF05] flex flex-col items-center">
-          <h2 className="text-2xl mb-4">$HACKATHON</h2>
+          <h2 className="text-2xl mb-6">Connect Your GitHub Account</h2>
+
+          {/* Show Farcaster info first */}
+          <div className="bg-[#1a1a1a] p-6 rounded-lg mb-8 text-center">
+            <h3 className="text-lg mb-4">Your Farcaster Account</h3>
+            <p className="text-gray-400">FID: {urlFid}</p>
+          </div>
+
+          {/* GitHub connect button */}
           <button
             onClick={login}
-            className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
+            className="px-6 py-3 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
           >
-            Login with GitHub
+            Connect GitHub Account
           </button>
-          {frameContextOutsideFrame?.user?.fid && (
-            <div className="p-4 mt-4 rounded-lg border flex flex-col items-center">
-              <p>you are coming from a farcaster frame</p>
-              <p>username: @{frameContextOutsideFrame.user.username}</p>
-              <p>fid: {frameContextOutsideFrame.user.fid}</p>
-              <div className="flex items-center justify-center h-16 w-16 rounded-full overflow-hidden">
-                <img
-                  src={frameContextOutsideFrame.user.pfpUrl}
-                  alt={frameContextOutsideFrame.user.username}
-                  className="h-full w-full"
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
   }
 
-  // User profile view
-  const displayUser = githubUser || user;
-  return (
-    <div className="flex flex-col items-center justify-start pt-20 px-4">
-      <div className="text-center">
-        <p className="text-gray-400 mb-2">connected via github:</p>
-        <div className="flex items-center justify-center mb-4">
-          {displayUser?.avatar_url && (
+  // Web View - No Valid Params
+  if (!frameContext && !user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-[#2DFF05] text-center">
+          <h2 className="text-2xl mb-4">Please start from Farcaster Frame</h2>
+          <p className="text-sm text-gray-400">
+            This page should be accessed through a Farcaster frame
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // GitHub Authenticated View
+  if (user) {
+    return (
+      <div className="flex flex-col items-center justify-start pt-20 px-4">
+        <div className="text-center">
+          <p className="text-gray-400 mb-2">Connected via GitHub</p>
+          {user.avatar_url && (
             <img
-              src={displayUser.avatar_url}
-              alt={displayUser.name || displayUser.login}
-              className="w-20 h-20 rounded-full border-2 border-[#2DFF05]"
+              src={user.avatar_url}
+              alt={user.name || user.login}
+              className="w-20 h-20 rounded-full border-2 border-[#2DFF05] mx-auto mb-4"
             />
           )}
+          <h1 className="text-2xl font-bold text-[#2DFF05] mb-2">
+            {user.name || user.login}
+          </h1>
+          {user.login && <p className="text-gray-400 mb-4">@{user.login}</p>}
+          {user.bio && (
+            <p className="text-gray-300 mb-4 max-w-md mx-auto">{user.bio}</p>
+          )}
+          <a
+            href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
+          >
+            back to frame
+          </a>
         </div>
-        <h1 className="text-2xl font-bold text-[#2DFF05] mb-2">
-          {displayUser?.name || displayUser?.login}
-        </h1>
-        {displayUser?.login && (
-          <p className="text-gray-400 mb-4">@{displayUser.login}</p>
-        )}
-        {displayUser?.bio && (
-          <p className="text-gray-300 mb-4 max-w-md mx-auto">
-            {displayUser.bio}
-          </p>
-        )}
-        <button
-          onClick={() => {
-            logout();
-            setGithubUser(null);
-          }}
-          className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
-        >
-          Logout
-        </button>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
 
 export default App;

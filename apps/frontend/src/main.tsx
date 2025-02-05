@@ -11,9 +11,11 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import sdk from "@farcaster/frame-sdk";
 import FarcasterProvider from "./components/providers/FarcasterProvider";
+import { FrameContext } from "./components/providers/FarcasterProvider";
 import { Providers } from "./components/providers";
 
 import App from "./App";
+import { GithubUser } from "./components/providers/GithubProvider";
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -52,11 +54,21 @@ function Root() {
   console.log("Rendering Root component");
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [authToken, setAuthToken] = useState("");
+  const [frameContext, setFrameContext] = useState<FrameContext | undefined>(
+    undefined
+  );
+  const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      const frameContext = await sdk.context;
-      if (frameContext.user.fid) {
+      console.log("Loading SDK context...");
+      const sdkFrameContext = await sdk.context;
+      console.log("SDK Frame Context:", sdkFrameContext);
+
+      if (sdkFrameContext.user.fid) {
+        console.log("User FID found:", sdkFrameContext.user.fid);
+        console.log("Making request to register frame opened...");
+
         const responseFromServer = await fetch(
           `${import.meta.env.VITE_SERVER_URL}/api/auth/register-frame-opened`,
           {
@@ -66,17 +78,28 @@ function Root() {
               "x-api-key": import.meta.env.VITE_API_KEY,
             },
             body: JSON.stringify({
-              frameContext,
+              frameContext: sdkFrameContext,
             }),
           }
         );
+
         const data = await responseFromServer.json();
         console.log("RESPONSE FROM SERVER: ", data);
+        console.log("Setting frame context and auth token...");
+        setFrameContext(sdkFrameContext as FrameContext);
         setAuthToken(data.authToken);
+        if (data.githubUser) {
+          setGithubUser(data.githubUser);
+        }
+      } else {
+        console.log("No user FID found in SDK context");
       }
+      console.log("Calling sdk.actions.ready()");
       sdk.actions.ready();
     };
+
     if (sdk && !isSDKLoaded) {
+      console.log("SDK available and not loaded, initializing...");
       setIsSDKLoaded(true);
       load();
     }
@@ -86,14 +109,18 @@ function Root() {
     <React.StrictMode>
       <Providers>
         <FarcasterProvider>
-          <div className="flex flex-col h-screen">
-            <div className="flex-1 overflow-auto">
-              <Routes>
-                <Route path="/" element={<App authToken={authToken} />} />
-              </Routes>
-            </div>
-            {/* <TabBar /> */}
-          </div>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <App
+                  authToken={authToken}
+                  frameContext={frameContext}
+                  githubUser={githubUser}
+                />
+              }
+            />
+          </Routes>
         </FarcasterProvider>
       </Providers>
     </React.StrictMode>

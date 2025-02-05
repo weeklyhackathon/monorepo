@@ -1,12 +1,17 @@
 import Router from "koa-router";
-import { env, log, POST, GET } from "@weeklyhackathon/utils";
+import {
+  env,
+  log,
+  POST,
+  GET,
+  createAuthSession,
+  validateAuthSession,
+  createGithubAuthToken,
+  validateGithubAuthToken,
+  checkGithubConnection,
+} from "@weeklyhackathon/utils";
 import { prisma } from "@weeklyhackathon/db";
 import { FrameContext } from "@weeklyhackathon/telegram/types";
-
-interface GitHubUserResponse {
-  id: number;
-  login: string;
-}
 
 export const authRouter = new Router({
   prefix: "/api/auth",
@@ -18,73 +23,146 @@ authRouter.get("/health", async (ctx) => {
   };
 });
 
+/**
+ * First Contact Point: Frame Opening
+ *
+ * This endpoint is called when a user first opens the Farcaster frame.
+ * It's the entry point of our auth flow and serves several purposes:
+ * 1. Creates or retrieves the user based on their Farcaster ID (FID)
+ * 2. Initializes an auth session for the GitHub connection flow
+ * 3. Checks if the user already has a GitHub account connected
+ *
+ * Flow Context:
+ * - User sees and opens the frame in their Farcaster client
+ * - Frame loads and sends user's Farcaster context to this endpoint
+ * - We create necessary database records and return auth token
+ * - Frontend uses this token for subsequent GitHub connection flow
+ */
+
 authRouter.post("/register-frame-opened", async (ctx) => {
   const { frameContext } = ctx.request.body as { frameContext: FrameContext };
   log.info("📝 Received frame context:", frameContext);
 
-  // Generate a random token
-  const authToken =
-    Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-  // Create user if doesn't exist
-  const user = await prisma.user.upsert({
-    where: { path: `fc_${frameContext.user.fid}` },
-    create: {
-      path: `fc_${frameContext.user.fid}`,
-      displayName:
-        frameContext.user.username ?? frameContext.user.fid.toString(),
-      farcasterUser: {
-        create: {
-          farcasterId: frameContext.user.fid,
-          username:
-            frameContext.user.username ?? frameContext.user.fid.toString(),
+  try {
+    // Create or update user in our database
+    // If user exists, this just returns the existing user
+    // If user is new, creates Farcaster user record
+    const user = await prisma.user.upsert({
+      where: { path: `fc_${frameContext.user.fid}` },
+      create: {
+        path: `fc_${frameContext.user.fid}`,
+        displayName:
+          frameContext.user.username ?? frameContext.user.fid.toString(),
+        farcasterUser: {
+          create: {
+            farcasterId: frameContext.user.fid,
+            username:
+              frameContext.user.username ?? frameContext.user.fid.toString(),
+          },
         },
       },
-    },
-    update: {},
-  });
+      update: {},
+      include: {
+        githubUser: true,
+      },
+    });
+    console.log("IN HEREEEEE ", user);
 
-  log.info("🔑 Generated auth token:", authToken);
-  log.info("💾 Stored frame context for later use");
+    // Create auth session for potential GitHub connection
+    // This generates a token that will be used to verify the user's
+    // identity when they move from frame to web interface
+    const { authToken } = await createAuthSession(frameContext);
 
-  ctx.body = {
-    authToken,
-  };
+    log.info(
+      "🔑 Generated auth token and created session for fid: ",
+      frameContext.user.fid
+    );
+
+    ctx.body = {
+      authToken,
+      hasGithub: !!user.githubUser,
+      githubUser: user.githubUser,
+    };
+  } catch (error) {
+    log.error("💥 Error in register-frame-opened:", error);
+    ctx.status = 500;
+    ctx.body = { error: "Failed to process frame registration" };
+  }
 });
 
+/**
+ * GitHub Connection Initiation
+ *
+ * This endpoint is called when user clicks "Connect GitHub" button.
+ * It bridges the gap between frame authentication and GitHub OAuth flow.
+ *
+ * Flow Context:
+ * - User has clicked "Connect GitHub" in the frame
+ * - They're about to be redirected to web interface
+ * - We need to generate a second token specifically for GitHub OAuth
+ * - This second token will be used in the OAuth state parameter
+ *
+ * Security Context:
+ * - Validates the original frame auth token
+ * - Creates a short-lived token specifically for GitHub OAuth
+ * - This prevents unauthorized GitHub connection attempts
+ */
 authRouter.post("/register-gh-login", async (ctx) => {
   const { frameContext, authToken } = ctx.request.body as {
     frameContext: FrameContext;
     authToken: string;
   };
 
-  // Verify user exists
-  const user = await prisma.user.findFirst({
-    where: {
-      path: `fc_${frameContext.user.fid}`,
-      farcasterUser: {
-        farcasterId: frameContext.user.fid,
+  try {
+    // Verify that this is a valid session from frame opening
+    const validationResult = await validateAuthSession(authToken);
+    if (!validationResult.isValid) {
+      ctx.status = 401;
+      ctx.body = { error: validationResult.error };
+      return;
+    }
+
+    // Check if user already has GitHub connected
+    const user = await prisma.user.findFirst({
+      where: {
+        path: `fc_${frameContext.user.fid}`,
+        farcasterUser: {
+          farcasterId: frameContext.user.fid,
+        },
       },
-    },
-  });
+      include: {
+        githubUser: true,
+      },
+    });
 
-  if (!user) {
-    ctx.status = 401;
-    ctx.body = { error: "Invalid user or frame context mismatch" };
-    return;
+    const isGithubConnected = !!user?.githubUser;
+
+    if (isGithubConnected) {
+      ctx.body = {
+        isGithubConnected: true,
+      };
+      return;
+    }
+
+    // If not connected, create second token for GitHub flow
+    const secondAuthToken = await createGithubAuthToken(authToken);
+    if (!secondAuthToken) {
+      ctx.status = 500;
+      ctx.body = { error: "Failed to create GitHub auth token" };
+      return;
+    }
+
+    log.info("🔑 Generated GitHub auth token");
+
+    ctx.body = {
+      secondAuthToken,
+      isGithubConnected: false,
+    };
+  } catch (error) {
+    log.error("💥 Error in register-gh-login:", error);
+    ctx.status = 500;
+    ctx.body = { error: "Failed to process GitHub login registration" };
   }
-
-  log.info("✅ Verified user and frame context match");
-
-  // Generate second auth token for GitHub flow
-  const secondAuthToken =
-    Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-  log.info("🔑 Generated second auth token:", secondAuthToken);
-
-  ctx.body = {
-    secondAuthToken,
-  };
 });
 
 authRouter.post("/get-farcaster-user-information", async (ctx) => {
@@ -132,60 +210,86 @@ authRouter.post("/get-farcaster-user-information", async (ctx) => {
   log.info("📤 Returning frame context for FID:", fid);
 });
 
+/**
+ * GitHub OAuth Callback Handler
+ *
+ * This endpoint handles the callback from GitHub's OAuth flow.
+ * It's the final step in connecting a user's GitHub account.
+ *
+ * Flow Context:
+ * - User has approved GitHub access on GitHub's website
+ * - GitHub redirects back to our web interface
+ * - We validate the session and connect the accounts
+ *
+ * Security Context:
+ * - Validates the GitHub-specific auth token from state parameter
+ * - Exchanges OAuth code for GitHub access token
+ * - Creates permanent connection between Farcaster and GitHub accounts
+ */
 authRouter.post("/github/callback", async (ctx) => {
   try {
-    const { code, state } = ctx.request.body as {
+    const { code, authToken, secondAuthToken, fid } = ctx.request.body as {
       code: string;
-      state: string;
+      authToken: string;
+      secondAuthToken: string;
+      fid: number;
     };
 
-    // Decode the state parameter to get our tokens
-    const { fid } = JSON.parse(atob(state));
+    log.info("Received GitHub callback with auth token:", authToken);
 
-    // Verify the user exists
-    const user = await prisma.user.findFirst({
-      where: {
-        path: `fc_${fid}`,
-        farcasterUser: {
-          farcasterId: fid,
-        },
-      },
-    });
+    // Verify this is a valid GitHub connection attempt
+    const validation = await validateGithubAuthToken(secondAuthToken);
+    log.info("GitHub auth validation result:", validation);
 
-    if (!user) {
+    if (!validation.isValid || !validation.session) {
+      log.error("Invalid GitHub auth session");
       ctx.status = 401;
-      ctx.body = { error: "Invalid user" };
+      ctx.body = { error: "Invalid or expired session" };
       return;
     }
 
-    // Exchange code for access token
+    log.info("Validated GitHub auth token, exchanging code for access token");
+
+    // Exchange the OAuth code for a GitHub access token
     const tokenResponse = (await POST({
       url: "https://github.com/login/oauth/access_token",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       body: {
         client_id: env.GITHUB_CLIENT_ID,
         client_secret: env.GITHUB_CLIENT_SECRET,
-        code: code,
+        code,
       },
-    })) as { access_token: string };
+    })) as { access_token?: string };
 
-    if (!tokenResponse.access_token) {
-      throw new Error("Failed to get access token");
+    log.info("GitHub token response:", tokenResponse);
+
+    if (!tokenResponse || !tokenResponse.access_token) {
+      log.error("Failed to get GitHub access token");
+      throw new Error("Failed to get GitHub access token");
     }
 
-    // Get GitHub user data
+    log.info("Got GitHub access token, fetching user profile");
+
+    // Get the user's GitHub profile information
     const githubUser = (await GET({
       url: "https://api.github.com/user",
       headers: {
         Authorization: `Bearer ${tokenResponse.access_token}`,
       },
-    })) as GitHubUserResponse;
+    })) as { id?: number; login?: string };
 
-    // Update user with GitHub information
+    log.info("GitHub user profile:", githubUser);
+
+    if (!githubUser || !githubUser.id || !githubUser.login) {
+      log.error("Failed to fetch GitHub user profile");
+      throw new Error("Failed to fetch GitHub user profile");
+    }
+
+    log.info("Connecting GitHub account to Farcaster user");
+
+    // Connect GitHub account to user's Farcaster account
     const updatedUser = await prisma.user.update({
-      where: { id: user.id },
+      where: { path: `fc_${fid}` },
       data: {
         githubUser: {
           upsert: {
@@ -207,6 +311,8 @@ authRouter.post("/github/callback", async (ctx) => {
       },
     });
 
+    log.info("Successfully connected GitHub account for user:", updatedUser);
+
     ctx.body = {
       access_token: tokenResponse.access_token,
       user: updatedUser,
@@ -221,39 +327,45 @@ authRouter.post("/github/callback", async (ctx) => {
   }
 });
 
+/**
+ * GitHub Connection Status Check
+ *
+ * This endpoint checks if a user already has a GitHub account connected.
+ * It's used both by the frame and web interface to determine what to show.
+ *
+ * Flow Context:
+ * - Called when frame/web interface loads
+ * - Helps determine whether to show "Connect GitHub" or "Already Connected"
+ * - Also used to verify successful connection after OAuth flow
+ */
 authRouter.get("/github/check-connection", async (ctx) => {
-  log.info("🔍 Checking GitHub connection");
   const fid = ctx.query.fid as string;
-
   if (!fid) {
-    log.info("❌ No FID provided in request");
     ctx.status = 400;
     ctx.body = { error: "No FID provided" };
     return;
   }
 
-  const user = await prisma.user.findFirst({
-    where: {
-      path: `fc_${fid}`,
-      farcasterUser: {
-        farcasterId: parseInt(fid),
-      },
-    },
-    include: {
-      githubUser: true,
-    },
-  });
-
-  if (!user?.githubUser) {
-    ctx.body = { isConnected: false };
-    return;
-  }
-
-  ctx.body = {
-    isConnected: true,
-  };
+  const isConnected = await checkGithubConnection(parseInt(fid));
+  ctx.body = { isConnected };
 });
 
+/**
+ * Fetch GitHub User Data
+ *
+ * This endpoint proxies requests to GitHub's API to fetch user data.
+ * It's used after successful GitHub connection to display user information.
+ *
+ * Flow Context:
+ * - Called after GitHub OAuth flow is complete
+ * - Uses the GitHub access token stored during OAuth
+ * - Provides GitHub profile information to the frontend
+ *
+ * Security Context:
+ * - Requires GitHub access token in Authorization header
+ * - Proxies request to GitHub API to maintain token security
+ * - Handles errors from GitHub API gracefully
+ */
 authRouter.get("/github/user", async (ctx) => {
   try {
     log.info("👤 Fetching GitHub user data");

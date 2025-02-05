@@ -58,15 +58,6 @@ processSubmissionsRouter.post('/', async (ctx) => {
       submission.flatFilePR+"\n"+JSON.stringify(hackerMessages)
     );
     
-    log.log(judgeMessages[0]);
-    try {
-      const jjj = JSON.parse(judgeMessages[0]);
-      log.info('parsed');
-      log.log(jjj);
-    } catch (err) {
-      log.error(err);
-    }
-    
     ctx.body = judgeMessages[0];
     return;
   } catch (error) {

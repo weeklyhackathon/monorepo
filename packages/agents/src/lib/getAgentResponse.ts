@@ -19,13 +19,34 @@ export async function getAgentResponse(agent: Agent, config: AgentConfig, input:
 
     for await (const chunk of stream) {
       if ("agent" in chunk) {
-        agentResponses.push(chunk.agent.messages[0].content);
+        const content = chunk.agent.messages[0].content;
+        
+        if (typeof content === "string") {
+          agentResponses.push(content);
+        } else if (Array.isArray(content)) {
+          for (const c of content) {
+            if (c?.text) agentResponses.push(c.text);
+          }          
+        }
+      
+        //agentResponses.push(chunk.agent.messages[0].content);
       } else if ("tools" in chunk) {
-        agentResponses.push(chunk.tools.messages[0].content);
+        const content = chunk.tools.messages[0].content;
+        
+        if (typeof content === "string") {
+          agentResponses.push(content);
+        } else if (Array.isArray(content)) {
+          for (const c of content) {
+            if (c?.text) agentResponses.push(c.text);
+          }          
+        }
+        
+        //agentResponses.push(chunk.tools.messages[0].content);
       }
     }
     
-    log.log(agentResponses);
+    
+    log.log(agentResponses.join("\n"));
     
     return agentResponses;
   } catch (error) {

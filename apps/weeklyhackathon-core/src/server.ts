@@ -57,3 +57,4 @@ app.use(async (ctx, next) => {
 
 app.use(telegramChatRouter.routes());
 app.use(processSubmissionsRouter.routes());
+app.use(sendPrizesRouter.routes());

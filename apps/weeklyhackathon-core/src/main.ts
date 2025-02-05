@@ -13,7 +13,7 @@ app.listen(port, host, () => {
 
 startCronJobs();
 
-//configureBot();
+configureBot();
 
 async function configureBot() {
   const webhookUrl = `${env.DOMAIN}/api/chat-telegram`;

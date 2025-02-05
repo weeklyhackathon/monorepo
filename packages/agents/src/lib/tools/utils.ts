@@ -40,14 +40,17 @@ export const getTokenAmounts = () => ({
 
 export const getHackerSubmissions = () => [
   { 
+    id: "1ahdjtaj",
     flatFilePR: "export const myRandomNumber = Math.floor(Math.random() * 69420);",
     hackerAgentResponse: ""
   },
   { 
+    id: "426djktd",
     flatFilePR: "export const myRandomNumber = Math.floor(Math.random() * 69420);import { myRandomNumber } from './random';function getRandomNumber() { return randomNumber };",
     hackerAgentResponse: ""
   },
   { 
+    id: "547jfdg",
     flatFilePR: "console.log('hello world');",
     hackerAgentResponse: ""
   }

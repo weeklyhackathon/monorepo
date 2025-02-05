@@ -7,7 +7,8 @@ import { distributePrizes } from './distributePrizes';
 export function startCronJobs() {
 
   log.info('Starting cron jobs');
-  evaluateSubmissions();
+  //evaluateSubmissions();
+  distributePrizes();
   // Evaluate submissions every day at 00:00 UTC
   //cron.schedule('0 0 * * *', evaluateSubmissions);
   // Distribute Prizes every Friday at 00:00 UTC

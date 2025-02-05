@@ -1,29 +1,24 @@
 import Router from 'koa-router';
 import { AgentType, initializeAgent, getAgentResponse } from '@weeklyhackathon/agents';
 import { log } from '@weeklyhackathon/utils';
-import { SendPrizeParams } from '@weeklyhackathon/agents'; 
 
 
 export const sendPrizesRouter = new Router({
-  prefix: '/api/send-prizes' // All routes will be prefixed with /tasks
+  prefix: '/api/send-prizes'
 });
 
 // POST
 sendPrizesRouter.post('/', async (ctx) => {
-  const { amountEth, amountHack, winners } = ctx.request.body as SendPrizeParams;
-  
-  if ((!amountEth && !amountHack) || !winners) {
-    ctx.status = 200;
-    log.info('Missing required fields');
-    return;
-  }
-  
+    log.info('Initializing payment agent');
   try {
     // Handle prizes distribution with the payments agent
+    /*
     const inputText = 
       `Distribute the following amount of ${amountEth} eth 
       and ${amountHack} $hackathon as prizes to that list of winners:
       \n${JSON.stringify(winners)}`;
+    */
+    const inputText = "Distribute the hackathon prizes to the winners.";
 
     const { agent, config } = await initializeAgent(AgentType.Payment);
     
@@ -33,6 +28,8 @@ sendPrizesRouter.post('/', async (ctx) => {
       return;      
     }
     
+    log.info('Payment agent is ready');
+    
     const messages = await getAgentResponse(agent, config, inputText);
 
     if (!messages) {
@@ -41,8 +38,8 @@ sendPrizesRouter.post('/', async (ctx) => {
       return;      
     }
     
-    log.log(messages);
-    return messages;
+    ctx.body = messages;
+    return;
   } catch (error) {
     log.error('Error in POST /api/send-prizes');
     log.error(error);

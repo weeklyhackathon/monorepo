@@ -27,6 +27,7 @@ export type ProcessSubmissionParams = {
 }
 
 export type Submission = {
+  id: string;
   hackerAgentResponse?: string;
   flatFilePR: string;
 }

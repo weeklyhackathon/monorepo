@@ -3,16 +3,17 @@ import { CdpTool } from "@coinbase/cdp-langchain";
 import { z } from "zod";
 import { getWinners } from "./utils";
 import { Agent, Winner } from "../types";
-import { hackathonAddress, hackathonSymbol } from "../constants";
+import { hackathonAddress, hackathonSymbol, wethAddress } from "../constants";
 import { log } from "@weeklyhackathon/utils";
 
 // Define the prompt for the winners payout tool
-const WINNERS_PAYOUT_PROMPT = "Transfer any 'amount' of the 'token' to a list of well known recipients extracted from the 'winners.json' file";
+const WINNERS_PAYOUT_PROMPT = "Transfer any 'amount' of the 'token' to a list of well known recipients extracted from the database. The input must include the 'amount' and the 'token' parameters.";
 
 // Define the input schema using Zod
 const WinnersPayoutInput = z.object({
-  token: z.string().describe("The ticker or symbol of the token to transfer. Must be one of 'wei', 'gwei', 'hackathon', 'usdc' or 'eth'"),
-  amount: z.number().describe("The total amount of the token to be distributed among winners")
+  //token: z.string().describe("The ticker or symbol of the token to transfer. Must be one of 'wei', 'gwei', 'hackathon', 'usdc', 'weth', or 'eth'"),
+  token: z.string().describe("The ticker or symbol of the token to transfer. Must be one of 'hackathon' or 'weth'."),
+  amount: z.number().describe("The total amount of the token to be distributed among winners.")
 });
 
 type WinnersPayoutSchema = z.infer<typeof WinnersPayoutInput>;
@@ -28,6 +29,7 @@ async function sendWinnersPayout(
   wallet: any,
   args: WinnersPayoutSchema,
 ): Promise<string> {
+  log.info('Processing winners payouts');
   const { token, amount } = args;
   if (!token || !amount) return "Error: Missing Token or Amount required fields";
 
@@ -51,14 +53,17 @@ async function sendWinnersPayout(
   for (const { address, amount, shares } of winners) {
     if (!amount) continue;
     try {
+      log.info(`Sending ${amount} of ${token} to ${address} with ${shares} shares of prize pool.`);
       const transfer = await wallet.createTransfer({
         amount: amount as Amount,
-        assetId: token === hackathonSymbol.toLowerCase() ? hackathonAddress : token,
+        assetId: token === "hackathon" ? hackathonAddress : (token === 'weth' || token === 'eth') ? wethAddress : token,
         destination: address,
         gasless: token === 'usdc',
       });
 
       await transfer.wait();
+
+      log.info("Current transaction completed");
 
       resultText +=
         `\nSuccess: Sent ${amount} of ${token} to ${address} with ${shares} shares` +

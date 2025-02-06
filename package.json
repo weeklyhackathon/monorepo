@@ -81,6 +81,7 @@
     "@langchain/openai": "^0.4.2",
     "@prisma/client": "^6.3.0",
     "@typescript-eslint/parser": "^8.19.0",
+    "@weeklyhackathon/testing": "^0.0.1",
     "@weeklyhackathon/utils": "^0.0.1",
     "dotenv-cli": "^8.0.0",
     "koa": "~2.14.1",

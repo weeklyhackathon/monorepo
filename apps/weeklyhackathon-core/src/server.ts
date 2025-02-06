@@ -2,6 +2,7 @@ import cors from '@koa/cors'; // CORS middleware
 import koa from 'koa';
 import koaBody from 'koa-bodyparser';
 import { env, log } from '@weeklyhackathon/utils';
+import { authRouter } from './api/auth';
 import { telegramChatRouter } from './api/chat-telegram';
 import { processSubmissionsRouter } from './api/process-submission';
 import { sendPrizesRouter } from './api/send-prizes';
@@ -30,10 +31,10 @@ app.use(koaBody());
 
 app.use(healthRouter.routes());
 
-
 // Global API Key Middleware -----------------
 app.use(async (ctx, next) => {
-  const requestApiKey = ctx.headers['x-api-key'] || ctx.query.apiKey || ctx.query.api_key;
+  const requestApiKey =
+    ctx.headers['x-api-key'] || ctx.query.apiKey || ctx.query.api_key;
 
   if (!env.APP_API_KEY) {
     ctx.body = {
@@ -54,7 +55,7 @@ app.use(async (ctx, next) => {
   await next(); // Continue to next middleware or route if API key is valid
 });
 
-
 app.use(telegramChatRouter.routes());
+app.use(authRouter.routes());
 app.use(processSubmissionsRouter.routes());
 app.use(sendPrizesRouter.routes());

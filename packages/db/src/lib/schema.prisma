@@ -19,6 +19,7 @@ model User {
   displayName   String
   farcasterUser FarcasterUser?
   githubUser    GithubUser?
+  pullRequests  GithubPullRequest[]
 }
 
 model GithubUser {
@@ -28,6 +29,7 @@ model GithubUser {
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   username  String   @unique
+  accessToken  String  
 }
 
 model FarcasterUser {
@@ -38,3 +40,52 @@ model FarcasterUser {
   user        User     @relation(fields: [userId], references: [id])
   username    String   @unique
 }
+
+model AuthSession {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  authToken       String   @unique
+  secondAuthToken String   @unique
+  fid             Int
+  frameContext    Json   
+}
+
+model GithubRepo {
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  name      String
+  owner     String
+  nameWithOwner String      @unique  
+  reviewedAt DateTime?
+  summary   String?
+  productDescription String?
+  technicalArchitecture String?
+  pullRequests     GithubPullRequest[]
+
+
+  @@unique([owner, name])
+}
+
+
+
+
+model GithubPullRequest {
+  id         String     @id @default(uuid())
+  submittedAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  submittedBy String
+  submitter    User @relation(fields: [submittedBy], references: [id])
+
+  number     Int
+  analysedAt DateTime?
+  productAnalysis String?
+  technicalArchitecture String?
+  githubRepoNameWithOwner String
+  repo       GithubRepo @relation(fields: [githubRepoNameWithOwner], references: [nameWithOwner])
+
+
+  @@unique([githubRepoNameWithOwner, number])
+}
+

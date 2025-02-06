@@ -70,7 +70,9 @@ export async function askDeepseek(
   if (!response.ok) {
     throw new Error(`DeepSeek API call failed: ${response.statusText}`);
   }
+
   const data = await response.json();
+
 
   if (schema) {
     return JSON.parse(data.choices[0].message.content);
@@ -79,6 +81,7 @@ export async function askDeepseek(
   // Assumes the response is in the format with a choices array.
   return data.choices[0].message.content;
 }
+
 
 // askDeepseek({
 //   message: 'What is the capital of France?',

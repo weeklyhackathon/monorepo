@@ -1,6 +1,7 @@
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { log } from '@weeklyhackathon/utils';
+import { askDeepseek } from '@weeklyhackathon/utils/askDeepseek';
 import { tokenize } from '@weeklyhackathon/utils/tokenize';
 
 // Maximum tokens for our LLM context (reserve a margin for the prompt)
@@ -174,57 +175,6 @@ async function buildRepoContext(
 }
 
 /**
- * Call the DeepSeek Chat API with the provided prompt.
- *
- * Expects the environment variable DEEPSEEK_API_KEY to be set.
- */
-async function callDeepseekAPI(
-  prompt: string
-): Promise<any> {
-  const apiUrl = 'https://api.deepseek.com/chat/completions';
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing DeepSeek API key in environment');
-  }
-
-  const requestBody = {
-    model: 'deepseek-chat',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a helpful assistant.'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.2,
-    // The response_format is used to instruct the API to return JSON.
-    response_format: {
-      type: 'json_object'
-    },
-    stream: false
-  };
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    body: JSON.stringify(requestBody),
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`DeepSeek API call failed: ${response.statusText}`);
-  }
-  const data = await response.json();
-  // Assumes the response is in the format with a choices array.
-  return JSON.parse(data.choices[0].message.content);
-}
-
-/**
  * Analyze the repository for its product aspects.
  *
  * The LLM is instructed to provide a product analysis in a JSON object with:
@@ -238,20 +188,17 @@ async function analyzeProduct(context: string): Promise<{
   const prompt = `
 Please analyze the following GitHub repository code and provide a product analysis.
 Focus on describing what the repository does as a product, its key functionalities, and the user benefits.
-Provide a human-friendly description between 200 to 400 words.
+Provide a human-friendly description between 300 to 600 words.
 Also include a list of 3-5 key topics or product categories (for example, fintech, e-commerce, social networking) that best describe the product.
-Output the answer as a JSON object exactly in the following format:
-
-{
-  "topics": string[],
-  "productDescription": string
-}
 
 Here is the repository code context:
 ${context}
 `;
 
-  return await callDeepseekAPI(prompt);
+  return await askDeepseek({
+    message: prompt,
+    systemPrompt: 'You are a helpful assistant that can analyze GitHub repositories and provide product analyses based on understanding what the code does.'
+  });
 }
 
 /**
@@ -267,18 +214,16 @@ async function analyzeTechnical(context: string): Promise<{
   const prompt = `
 Please analyze the following GitHub repository code and provide a technical architecture analysis.
 Focus on describing the technical design, main components, frameworks, design patterns, dependencies, and interactions.
-Provide a human-friendly description between 200 to 400 words that explains the repository's technical structure.
-Output the answer as a JSON object exactly in the following format:
-
-{
-  "technicalArchitecture": string
-}
+Provide a human-friendly description between 300 to 600 words that explains the repository's technical structure.
 
 Here is the repository code context:
 ${context}
 `;
 
-  return await callDeepseekAPI(prompt);
+  return await askDeepseek({
+    message: prompt,
+    systemPrompt: 'You are a helpful assistant that can analyze GitHub repositories and provide technical architecture analyses. You identify the core modules and services that make up the system and how they are related to each other'
+  });
 }
 
 /**
@@ -328,7 +273,8 @@ export async function processRepo({
   // Build a single text context for the LLM.
   const context = await buildRepoContext(fileTree, MAX_TOKENS);
 
-  // Get the two analyses in parallel.
+
+  // // Get the two analyses in parallel.
   const [productAnalysis, technicalAnalysis] = await Promise.all([
     analyzeProduct(context),
     analyzeTechnical(context)
@@ -341,20 +287,7 @@ export async function processRepo({
   };
 
 
-  log.info('--------------------------------');
+  // log.info('--------------------------------');
 
   return enrichedData;
 }
-
-// Example usage
-processRepo({
-  repoOwner: 'weeklyhackathon',
-  repoName: 'monorepo'
-})
-  .then((result) => {
-    log.info('Analysis Result:');
-    log.info(result);
-  })
-  .catch((error) => {
-    log.error('Error analyzing repo:', error);
-  });

@@ -24,8 +24,7 @@
     "test:ai": "APP_ENV=test GENERATE_TOOL_SCHEMAS=true npx dotenv -e .env.test.local -- jest --config jest.ai.config.js --verbose",
     "clean": "rm -rf ./dist && rm -rf ./packages/*/dist",
     "docker:build:postgres": "docker build -t postgres-with-vector:latest -f docker_images/postgres_with_vector/Dockerfile .",
-    "packagegen": "chmod +x scripts/generatePackage.sh && ./scripts/generatePackage.sh",
-    "heroku-postbuild": "npm run build -w=apps/frontend && npm run build -w=apps/weeklyhackathon-core"
+    "packagegen": "chmod +x scripts/generatePackage.sh && ./scripts/generatePackage.sh"
   },
   "private": true,
   "devDependencies": {

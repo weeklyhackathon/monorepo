@@ -1,1 +1,1 @@
-web: APP_NAME=weeklyhackathon-core npm run start:prod
+web: npm run prisma:migrate:prod && APP_NAME=weeklyhackathon-core npm run start:prod

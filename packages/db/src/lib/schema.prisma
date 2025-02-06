@@ -85,6 +85,7 @@ model GithubPullRequest {
   githubRepoNameWithOwner String
   repo       GithubRepo @relation(fields: [githubRepoNameWithOwner], references: [nameWithOwner])
 
+  score      Int        @default(0)
 
   @@unique([githubRepoNameWithOwner, number])
 }

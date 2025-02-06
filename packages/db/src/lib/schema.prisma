@@ -29,6 +29,7 @@ model GithubUser {
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   username  String   @unique
+  accessToken  String  
 }
 
 model FarcasterUser {
@@ -40,6 +41,15 @@ model FarcasterUser {
   username    String   @unique
 }
 
+model AuthSession {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  authToken       String   @unique
+  secondAuthToken String   @unique
+  fid             Int
+  frameContext    Json   
+}
 
 model GithubRepo {
   createdAt DateTime       @default(now())

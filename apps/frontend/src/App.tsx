@@ -4,11 +4,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { GithubUser, useGitHub } from "./components/providers/GithubProvider";
 import { FrameContext } from "./components/providers/FarcasterProvider";
 import HackerDashboard from "./components/HackerDashboard";
+import GitHubConnectView from "./components/GitHubConnectView";
 
 function App({
   authToken,
   frameContext,
-  githubUser,
+  githubUser: initialGithubUser,
 }: {
   authToken: string;
   frameContext: FrameContext | undefined;
@@ -18,6 +19,9 @@ function App({
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [githubUser, setGithubUser] = useState<GithubUser | null>(
+    initialGithubUser
+  );
 
   // Handle GitHub OAuth callback
   useEffect(() => {
@@ -47,6 +51,7 @@ function App({
 
   // Frame View - Show Connect Button
   if (frameContext?.user.fid) {
+    console.log("IN HERE", githubUser, frameContext);
     if (githubUser && githubUser.username) {
       return (
         <HackerDashboard frameContext={frameContext} githubUser={githubUser} />
@@ -54,58 +59,15 @@ function App({
     }
 
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-[#2DFF05] flex flex-col items-center">
-          <h2 className="text-2xl mb-4">$HACKATHON</h2>
-          <button
-            onClick={async () => {
-              try {
-                const response = await fetch(
-                  `${
-                    import.meta.env.VITE_SERVER_URL
-                  }/api/auth/register-gh-login`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "x-api-key": import.meta.env.VITE_API_KEY,
-                    },
-                    body: JSON.stringify({
-                      frameContext,
-                      authToken,
-                    }),
-                  }
-                );
-
-                if (!response.ok)
-                  throw new Error("Failed to register GitHub login");
-
-                const { secondAuthToken } = await response.json();
-
-                // Open web view with auth parameters
-                window.open(
-                  `${
-                    import.meta.env.VITE_BASE_URL
-                  }?authToken=${authToken}&secondAuthToken=${secondAuthToken}&fid=${
-                    frameContext.user.fid
-                  }`,
-                  "_blank"
-                );
-              } catch (error) {
-                setError(
-                  error instanceof Error ? error.message : "Unknown error"
-                );
-              }
-            }}
-            className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
-          >
-            Connect GitHub Account
-          </button>
-          <small className="mt-4 text-xs text-gray-400">
-            This will open a new tab for GitHub authentication
-          </small>
-        </div>
-      </div>
+      <GitHubConnectView
+        frameContext={frameContext}
+        authToken={authToken}
+        onSuccess={({ frameContext: { githubUser } }) => {
+          setGithubUser(githubUser);
+        }}
+        error={error}
+        setError={setError}
+      />
     );
   }
 
@@ -117,22 +79,31 @@ function App({
 
   if (urlAuthToken && urlSecondAuthToken && urlFid && !user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-[#2DFF05] flex flex-col items-center">
-          <h2 className="text-2xl mb-6">Connect Your GitHub Account</h2>
+      <div className="flex items-center justify-center h-screen bg-black/95">
+        <div className="text-[#2DFF05] flex flex-col items-center max-w-md p-8 border border-[#2DFF05]/20 rounded-lg bg-black/80 backdrop-blur-sm">
+          <h2 className="text-3xl font-bold mb-6 tracking-wider">
+            IDENTITY VERIFICATION
+          </h2>
 
-          {/* Show Farcaster info first */}
-          <div className="bg-[#1a1a1a] p-6 rounded-lg mb-8 text-center">
-            <h3 className="text-lg mb-4">Your Farcaster Account</h3>
-            <p className="text-gray-400">FID: {urlFid}</p>
+          <div className="bg-[#0a0a0a] p-6 rounded-lg mb-8 w-full border border-[#2DFF05]/10">
+            <div className="text-lg text-[#2DFF05]/70 uppercase tracking-widest mb-2">
+              Farcaster FID
+            </div>
+            <code className="font-mono text-xl">{urlFid}</code>
           </div>
+          <p className="text-lg text-center mb-8 text-[#2DFF05]/80">
+            Link your GitHub account to submit PRs through Farcaster frames.
+            Each week, AI judges select the top 8 PRs to earn proportional
+            shares of $hackathon trading fees.
+          </p>
 
-          {/* GitHub connect button */}
           <button
             onClick={login}
-            className="px-6 py-3 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
+            className="w-full px-8 py-4 bg-[#2DFF05]/10 border border-[#2DFF05]/30 rounded-lg 
+                     hover:bg-[#2DFF05]/20 hover:border-[#2DFF05]/50 hover:shadow-[0_0_15px_rgba(45,255,5,0.2)]
+                     transition-all duration-300 text-lg tracking-wide hover:cursor-pointer"
           >
-            Connect GitHub Account
+            &gt; Initialize GitHub Auth_
           </button>
         </div>
       </div>
@@ -142,12 +113,61 @@ function App({
   // Web View - No Valid Params
   if (!frameContext && !user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-[#2DFF05] text-center">
-          <h2 className="text-2xl mb-4">Please start from Farcaster Frame</h2>
-          <p className="text-sm text-gray-400">
-            This page should be accessed through a Farcaster frame
-          </p>
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="text-[#2DFF05] text-center max-w-2xl p-8 border border-[#2DFF05]/30 rounded-lg bg-[#0a0a0a] shadow-[0_0_15px_rgba(45,255,5,0.3)]">
+          <h1 className="text-6xl font-bold mb-2 animate-pulse">$hackathon</h1>
+          <div
+            onClick={(event) => {
+              navigator.clipboard.writeText(
+                "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb"
+              );
+              const el = event.currentTarget as HTMLDivElement;
+              el.classList.add("text-[#2DFF05]/50");
+              el.textContent = "Copied!";
+              setTimeout(() => {
+                el.classList.remove("text-[#2DFF05]/50");
+                el.textContent = "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb";
+              }, 1000);
+            }}
+            className="font-mek text-lg mb-8 cursor-pointer hover:text-[#2DFF05]/80 transition-colors"
+          >
+            0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb
+          </div>
+          <div className="mb-8 text-xl leading-relaxed space-y-4">
+            <p>Welcome to the decentralized future of hackathons.</p>
+            <p>Submit your best PRs, compete weekly, earn rewards.</p>
+            <p>Judged by AI. Paid by smart contracts. Pure meritocracy.</p>
+            <p>
+              All prizes come from $hackathon trading fees - a{" "}
+              <a
+                href="https://www.clanker.world/clanker/0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                clanker
+              </a>{" "}
+              token.
+            </p>
+          </div>
+          <div className="text-lg text-[#2DFF05]/50 mb-6">
+            Access the full experience through{" "}
+            <a
+              href="https://warpcast.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#2DFF05] hover:text-purple-500 transition-colors"
+            >
+              Warpcast
+            </a>
+          </div>
+          <a
+            href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-8 py-3 bg-[#2DFF05]/10 border border-[#2DFF05] rounded-lg hover:bg-[#2DFF05]/20 hover:shadow-[0_0_20px_rgba(45,255,5,0.4)] transition-all duration-300"
+          >
+            &gt; Launch Frame_
+          </a>
         </div>
       </div>
     );

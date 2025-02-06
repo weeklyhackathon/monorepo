@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ["testing.weeklyhackathon.com"],
-    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     host: true,
   },
 });

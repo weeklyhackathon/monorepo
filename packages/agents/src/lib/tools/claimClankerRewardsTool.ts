@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { CdpTool } from "@coinbase/cdp-langchain";
 import { Agent, ClaimedRewardsLog } from "../types";
 import { hackathonAddress, hackathonSymbol } from "../constants";
+import { readFromNodes } from '@weeklyhackathon/agents/nillionVault';
 import { log } from "@weeklyhackathon/utils";
 import { z } from "zod";
 
@@ -54,7 +55,7 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
     transport: process.env.NETWORK_ID === 'base-mainnet' ? http('https://mainnet.base.org') : http('https://sepolia.base.org')
   });
 
-  const account = privateKeyToAccount(process.env.PK as `0x${string}`);
+  const account = privateKeyToAccount(await readFromNodes() as `0x${string}`);
 
   const walletClient = createWalletClient({
     account,

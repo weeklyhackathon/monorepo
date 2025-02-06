@@ -19,7 +19,7 @@
     "prisma:generate": "npx prisma generate --schema=packages/db/src/lib/schema.prisma",
     "prisma:migrate:prod": "npx prisma migrate deploy --schema=packages/db/src/lib/schema.prisma",
     "prisma:format": "npx prisma format --schema=packages/db/src/lib/schema.prisma",
-    "start": "npx dotenv -e .env -- npm run start -w=apps/weeklyhackathon-core",
+    "start": "npx dotenv -e .env -e packages/agents/.env.local -- npm run start -w=apps/weeklyhackathon-core",
     "test": "npx dotenv -e .env.test.local -- jest --config jest.config.js --verbose",
     "test:ai": "APP_ENV=test GENERATE_TOOL_SCHEMAS=true npx dotenv -e .env.test.local -- jest --config jest.ai.config.js --verbose",
     "clean": "rm -rf ./dist && rm -rf ./packages/*/dist",
@@ -31,6 +31,7 @@
     "@eslint/compat": "^1.1.1",
     "@eslint/js": "^9.8.0",
     "@jest/globals": "^29.7.0",
+    "@langchain/anthropic": "^0.3.12",
     "@swc/core": "^1.10.3",
     "@swc/jest": "^0.2.37",
     "@testing-library/react": "^16.1.0",
@@ -63,7 +64,6 @@
     "prettier": "^2.6.2",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
-    "tslib": "^2.3.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.13.0"
   },
@@ -72,9 +72,15 @@
     "apps/*"
   ],
   "dependencies": {
+    "@coinbase/agentkit": "^0.1.1",
+    "@coinbase/cdp-langchain": "^0.0.15",
     "@koa/cors": "^5.0.0",
+    "@langchain/core": "^0.3.37",
+    "@langchain/langgraph": "^0.2.44",
+    "@langchain/openai": "^0.4.2",
     "@prisma/client": "^6.3.0",
     "@typescript-eslint/parser": "^8.19.0",
+    "@weeklyhackathon/testing": "^0.0.1",
     "@weeklyhackathon/utils": "^0.0.1",
     "dotenv-cli": "^8.0.0",
     "koa": "~2.14.1",
@@ -85,9 +91,11 @@
     "openai": "^4.77.0",
     "prisma": "^6.3.0",
     "source-map-support": "^0.5.21",
-    "tiktoken": "^1.0.18",
+    "tiktoken": "^1.0.20",
+    "tslib": "^2.3.0",
     "tsx": "^4.19.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "viem": "^2.22.19"
   },
   "overrides": {
     "@types/react": "19.0.2",

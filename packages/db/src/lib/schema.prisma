@@ -19,6 +19,7 @@ model User {
   displayName   String
   farcasterUser FarcasterUser?
   githubUser    GithubUser?
+  pullRequests  GithubPullRequest[]
 }
 
 model GithubUser {
@@ -49,3 +50,42 @@ model AuthSession {
   fid             Int
   frameContext    Json   
 }
+
+model GithubRepo {
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  name      String
+  owner     String
+  nameWithOwner String      @unique  
+  reviewedAt DateTime?
+  summary   String?
+  productDescription String?
+  technicalArchitecture String?
+  pullRequests     GithubPullRequest[]
+
+
+  @@unique([owner, name])
+}
+
+
+
+
+model GithubPullRequest {
+  id         String     @id @default(uuid())
+  submittedAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  submittedBy String
+  submitter    User @relation(fields: [submittedBy], references: [id])
+
+  number     Int
+  analysedAt DateTime?
+  productAnalysis String?
+  technicalArchitecture String?
+  githubRepoNameWithOwner String
+  repo       GithubRepo @relation(fields: [githubRepoNameWithOwner], references: [nameWithOwner])
+
+
+  @@unique([githubRepoNameWithOwner, number])
+}
+

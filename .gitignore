@@ -3,8 +3,10 @@
 # environment
 .env
 .env.*
+/packages/*/.env.*
 !.env.ci
 !.env.example
+!/packages/*/.env.local.example
 
 # compiled output
 dist

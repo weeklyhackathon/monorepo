@@ -1,0 +1,13 @@
+{
+  "name": "@weeklyhackathon/testing",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.ts",
+  "scripts": {
+    "test": "npx jest --passWithNoTests"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/lib/*.ts"
+  }
+}

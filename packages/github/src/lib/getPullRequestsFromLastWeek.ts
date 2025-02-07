@@ -6,7 +6,6 @@ import { prisma } from '@weeklyhackathon/db';
  *
  * @returns An array of pull request records created in the last week
  */
-/// TODO: must check if the repos are already reviewed
 export async function getPullRequestsFromLastWeek(): Promise<GithubPullRequest[]> {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -16,7 +15,8 @@ export async function getPullRequestsFromLastWeek(): Promise<GithubPullRequest[]
     where: {
       submittedAt: {
         gte: oneWeekAgo
-      }
+      },
+      score: 0
     }
   });
 }

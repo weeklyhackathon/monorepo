@@ -89,4 +89,3 @@ model GithubPullRequest {
 
   @@unique([githubRepoNameWithOwner, number])
 }
-

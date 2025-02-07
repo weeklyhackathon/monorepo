@@ -24,8 +24,14 @@ app.use(async (ctx, next) => {
   }
 });
 
-// CORS Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGIN ?? "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "Accept", "x-api-key"],
+    credentials: true,
+  })
+);
 
 // JSON Parser Middleware
 app.use(koaBody());

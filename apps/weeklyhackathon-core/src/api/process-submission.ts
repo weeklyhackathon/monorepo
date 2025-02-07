@@ -97,7 +97,7 @@ processSubmissionsRouter.post("/", async (ctx) => {
     }
     
     const messengerInput = 
-      "Format the following content to write and send casts (posts) in the farcaster social network." + "\n\n" +
+      "Format the following content and send both casts (posts) to the farcaster social network." + "\n\n" +
       "CONTENT HACKER START" + "\n========\n" +
       JSON.stringify(hackerMessages) + "\n\n" +
       "CONTENT HACKER END" + "\n\n" +

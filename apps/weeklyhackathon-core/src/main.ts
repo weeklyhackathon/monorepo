@@ -1,7 +1,7 @@
 import { setTelegramBotWebhook } from '@weeklyhackathon/telegram';
 //import { createSchema, writeToNodes, readFromNodes } from '@weeklyhackathon/agents/nillionVault';
 import { log, env } from '@weeklyhackathon/utils';
-import { startCronJobs, startDemo } from './cron';
+import { startCronJobs/*, startDemo*/ } from './cron';
 import { app } from './server';
 
 const host = process.env.HOST ?? 'localhost';

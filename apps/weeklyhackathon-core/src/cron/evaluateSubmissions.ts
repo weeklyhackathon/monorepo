@@ -15,7 +15,7 @@ export async function evaluateSubmissions(): Promise<void> {
   log.info('Evaluating submissions'); 
 
   for (const submission of submissions) {
-    const response = await fetch(env.DOMAIN+'/api/process-submission', {
+    const response = await fetch(env.DOMAIN+'/api/process-submission/test', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ export async function evaluateSubmissions(): Promise<void> {
       log.error(`${response.status} - ${response.statusText}`);
     } else {
       log.info('Hacker submission processed');  
-      
+
       const { score } = await response?.json();
       if (!score) {
         log.info('No score found');

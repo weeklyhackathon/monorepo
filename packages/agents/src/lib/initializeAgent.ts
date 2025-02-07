@@ -6,7 +6,7 @@ import { ChatOpenAI } from "@langchain/openai";
 //import { ChatAnthropic } from "@langchain/anthropic";
 import { log } from "@weeklyhackathon/utils";
 import { validateAgentEnv } from "@weeklyhackathon/utils";
-import { getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
+import { getSendCastTool, getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
 import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
 import { 
   hackerAgentPrompt, 
@@ -24,7 +24,7 @@ import {
 export async function initializeAgent(agentType: AgentType): Promise<AgentWithConfig> {
   if (!validateAgentEnv()) return {};
 
-  try {   
+  try {
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY as string,
       model: "gpt-4o-mini",
@@ -55,10 +55,18 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     if (agentType === AgentType.Payment) {
       // Get an instance of the winners payout tool
       const winnersPayoutTool = getWinnersPayoutTool(agentkit);
+      // Get an instance of the claim clanker rewards tool
       const claimClankerRewardsTool = getClaimClankerRewardsTool(agentkit);
       // Add the tools to your toolkit
       tools.push(winnersPayoutTool);    
       tools.push(claimClankerRewardsTool);
+    }
+    
+    if (agentType === AgentType.Messenger) {
+      // Get an instance of the send cast tool
+      const sendCastTool = getSendCastTool(agentkit);
+      // Add the tools to your toolkit
+      tools.push(sendCastTool);
     }
 
     // Store buffered conversation history in memory

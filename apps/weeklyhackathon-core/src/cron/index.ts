@@ -11,8 +11,9 @@ export function startCronJobs() {
   // Distribute Prizes every Friday at 00:00 UTC
   cron.schedule('0 0 * * 5', distributePrizes);
 }
-
+/*
 export async function startDemo() {
   await evaluateSubmissions();
   await distributePrizes();
 }
+*/

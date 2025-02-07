@@ -192,7 +192,7 @@ function App({
             </a>
           </div>
           <a
-            href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
+            href="https://warpcast.com/~/frames/launch?domain=hackathontoken.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-8 py-3 bg-[#2DFF05]/10 border border-[#2DFF05] rounded-lg hover:bg-[#2DFF05]/20 hover:shadow-[0_0_20px_rgba(45,255,5,0.4)] transition-all duration-300"
@@ -238,7 +238,15 @@ function App({
             Welcome to $HACKATHON
           </p>
           <p className="text-lg text-[#2DFF05]/80">
-            You can now close this tab and go back to the frame
+            You can now close this tab and{" "}
+            <a
+              href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-500 hover:text-purple-300 transition-colors"
+            >
+              go back to the frame
+            </a>
           </p>
         </div>
       </div>

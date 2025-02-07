@@ -6,7 +6,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    allowedHosts: ["testing.weeklyhackathon.com"],
+    allowedHosts: [
+      "testing.weeklyhackathon.com",
+      "hackathontoken.com",
+      "weeklyhackathon.com",
+    ],
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     host: true,
   },

@@ -58,45 +58,52 @@ function Root() {
     undefined
   );
   const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      console.log("Loading SDK context...");
-      const sdkFrameContext = await sdk.context;
-      console.log("SDK Frame Context:", sdkFrameContext);
+      try {
+        console.log("Loading SDK context...");
+        const sdkFrameContext = await sdk.context;
+        console.log("SDK Frame Context:", sdkFrameContext);
 
-      if (sdkFrameContext.user.fid) {
-        console.log("User FID found:", sdkFrameContext.user.fid);
-        console.log("Making request to register frame opened...");
+        if (sdkFrameContext.user.fid) {
+          console.log("User FID found:", sdkFrameContext.user.fid);
+          console.log("Making request to register frame opened...");
 
-        const responseFromServer = await fetch(
-          `${import.meta.env.VITE_SERVER_URL}/api/auth/register-frame-opened`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": import.meta.env.VITE_API_KEY,
-            },
-            body: JSON.stringify({
-              frameContext: sdkFrameContext,
-            }),
+          const responseFromServer = await fetch(
+            `${import.meta.env.VITE_SERVER_URL}/api/auth/register-frame-opened`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-key": import.meta.env.VITE_API_KEY,
+              },
+              body: JSON.stringify({
+                frameContext: sdkFrameContext,
+              }),
+            }
+          );
+
+          const data = await responseFromServer.json();
+          console.log("RESPONSE FROM SERVER: ", data);
+          console.log("Setting frame context and auth token...");
+          setFrameContext(sdkFrameContext as FrameContext);
+          setAuthToken(data.authToken);
+          if (data.githubUser) {
+            console.log("Setting github user...", data.githubUser);
+            setGithubUser(data.githubUser);
           }
-        );
-
-        const data = await responseFromServer.json();
-        console.log("RESPONSE FROM SERVER: ", data);
-        console.log("Setting frame context and auth token...");
-        setFrameContext(sdkFrameContext as FrameContext);
-        setAuthToken(data.authToken);
-        if (data.githubUser) {
-          console.log("Setting github user...", data.githubUser);
-          setGithubUser(data.githubUser);
+        } else {
+          console.log("No user FID found in SDK context");
         }
-      } else {
-        console.log("No user FID found in SDK context");
+      } catch (err) {
+        console.error("Error in load function:", err);
+        setError("An error occurred while loading the application");
+      } finally {
+        console.log("Calling sdk.actions.ready()");
+        sdk.actions.ready();
       }
-      console.log("Calling sdk.actions.ready()");
-      sdk.actions.ready();
     };
 
     if (sdk && !isSDKLoaded) {
@@ -105,6 +112,31 @@ function Root() {
       load();
     }
   }, [isSDKLoaded]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="text-[#2DFF05] text-center max-w-2xl p-8 border border-[#2DFF05] rounded-lg bg-black shadow-[0_0_30px_rgba(45,255,5,0.3)]">
+          <h1 className="text-4xl font-bold mb-6 animate-pulse">
+            Error Occurred
+          </h1>
+          <p className="text-xl mb-6">{error}</p>
+          <p className="text-lg mb-4">
+            Please contact{" "}
+            <a
+              href="https://warpcast.com/jpfraneto.eth"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-[#2DFF05]/80 transition-colors"
+            >
+              @jpfraneto.eth
+            </a>{" "}
+            to resolve this issue.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <React.StrictMode>

@@ -5,12 +5,14 @@ import { distributePrizes } from './distributePrizes';
 
 
 export function startCronJobs() {
-
   log.info('Starting cron jobs');
-  //evaluateSubmissions();
-  distributePrizes();
   // Evaluate submissions every day at 00:00 UTC
-  //cron.schedule('0 0 * * *', evaluateSubmissions);
+  cron.schedule('0 0 * * *', evaluateSubmissions);
   // Distribute Prizes every Friday at 00:00 UTC
-  //cron.schedule('0 0 * * 5', distributePrizes);
+  cron.schedule('0 0 * * 5', distributePrizes);
+}
+
+export async function startDemo() {
+  await evaluateSubmissions();
+  await distributePrizes();
 }

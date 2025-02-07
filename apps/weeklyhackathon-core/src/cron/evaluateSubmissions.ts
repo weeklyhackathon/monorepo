@@ -29,11 +29,13 @@ export async function evaluateSubmissions(): Promise<void> {
       log.error(`${response.status} - ${response.statusText}`);
     } else {
       log.info('Hacker submission processed');  
+      
       const { score } = await response?.json();
       if (!score) {
         log.info('No score found');
         return;
       }
+      
       log.info('Current Hacker score');  
       log.log(score);
 

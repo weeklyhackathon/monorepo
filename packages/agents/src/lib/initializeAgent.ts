@@ -7,8 +7,14 @@ import { ChatOpenAI } from "@langchain/openai";
 import { log } from "@weeklyhackathon/utils";
 import { validateAgentEnv } from "@weeklyhackathon/utils";
 import { getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
-import { hackerAgentPrompt, judgeAgentPrompt, paymentAgentPrompt } from "./constants";
 import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
+import { 
+  hackerAgentPrompt, 
+  judgeAgentPrompt, 
+  paymentAgentPrompt, 
+  messengerAgentPrompt 
+} from "./constants";
+
 
 /**
  * Initialize the agent with CDP Agentkit
@@ -59,7 +65,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     const memory = new MemorySaver();
     const agentConfig = {
       agentType,
-      configurable: { thread_id: "Hackathon Agent!" }
+      configurable: { thread_id: "WHackathon Agent!" }
     };
 
     // Create React Agent using the LLM and CDP Agentkit tools
@@ -68,6 +74,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
       tools,
       checkpointSaver: memory,
       messageModifier:
+       agentType === AgentType.Messenger ? messengerAgentPrompt : 
        agentType === AgentType.Payment ? paymentAgentPrompt : 
        agentType === AgentType.Judge ? judgeAgentPrompt : 
        agentType === AgentType.Hacker ? hackerAgentPrompt : ""

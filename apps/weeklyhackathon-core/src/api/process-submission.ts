@@ -92,7 +92,7 @@ processSubmissionsRouter.post("/", async (ctx) => {
     if (!messengerAgent || messengerConfig?.agentType !== AgentType.Messenger) {
       ctx.status = 200;
       log.info("Could not initialize the messenger agent");
-      return;
+      return judgeMessages[0];
     }
     
     const messengerInput = 
@@ -111,7 +111,7 @@ processSubmissionsRouter.post("/", async (ctx) => {
       messengerInput
     );
 
-    ctx.body = messengerMessages[0];
+    ctx.body = judgeMessages[0];
     return;
   } catch (error) {
     log.error("Error in POST /api/process-submission");

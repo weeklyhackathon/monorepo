@@ -1,4 +1,5 @@
 import { AgentKitOptions } from "@coinbase/agentkit";
+import { Address } from "viem"; 
 import { EnrichedPullRequest } from '@weeklyhackathon/github'; 
 
 export enum AgentType {
@@ -12,9 +13,9 @@ export type AgentConfig = { agentType: AgentType; configurable: { thread_id: str
 export type AgentWithConfig = { agent?: Agent, config?: AgentConfig };
 
 export type Winner = {
-  address: string;
-  shares: string;
-  amount?: Number;
+  address?: Address;
+  shares: number;
+  amount?: number;
 }
 
 export type SendPrizeParams = { 

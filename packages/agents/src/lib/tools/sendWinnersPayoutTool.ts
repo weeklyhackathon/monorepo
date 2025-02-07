@@ -1,10 +1,13 @@
 import { Amount, Wallet } from "@coinbase/coinbase-sdk";
 import { CdpTool } from "@coinbase/cdp-langchain";
 import { z } from "zod";
-import { getWinners } from "./utils";
-import { Agent, Winner } from "../types";
-import { hackathonAddress, hackathonSymbol, wethAddress } from "../constants";
+import { Address, getAddress } from "viem";
+import { getTopScoresFromLastWeek } from "@weeklyhackathon/github";
+import type { Agent, Winner } from "../types";
+import type { GithubPullRequest } from '@weeklyhackathon/db';
+import { hackathonAddress, hackathonSymbol, wethAddress, winnerShares } from "../constants";
 import { log } from "@weeklyhackathon/utils";
+import { prisma } from "@weeklyhackathon/db";  
 
 // Define the prompt for the winners payout tool
 const WINNERS_PAYOUT_PROMPT = "Transfer any 'amount' of the 'token' to a list of well known recipients extracted from the database. The input must include the 'amount' and the 'token' parameters.";
@@ -17,6 +20,47 @@ const WinnersPayoutInput = z.object({
 });
 
 type WinnersPayoutSchema = z.infer<typeof WinnersPayoutInput>;
+
+async function getWinners(): Promise<Winner[]> {
+  const top8: GithubPullRequest[] = await getTopScoresFromLastWeek();
+  
+  const winners: Winner[] = [];
+  for (let i = 0; i < top8.length; i++) {
+    winners.push({
+      address: await getHackerAddress(top8[i].submittedBy),
+      shares: winnerShares[i]
+    });
+  }
+  
+  return winners;
+}
+
+async function getHackerAddress(userId: string): Promise<Address | undefined> {
+  const hacker = await prisma.farcasterUser.findUnique({
+    where: {
+      userId: userId
+    },
+    select: {
+      farcasterId: true
+    }
+  });
+  return await getAddressFromFID(hacker?.farcasterId);
+}
+
+async function getAddressFromFID(fid?: number): Promise<Address | undefined> {
+  if (!fid) return undefined;
+  
+  const options = {
+    method: 'GET',
+    headers: {accept: 'application/json', api_key: process.env.NEYNAR_API_KEY ?? 'NEYNAR_DOCS'}
+  }
+  const endpoint = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}&viewer_fid=3`;
+  
+  const response = await fetch(endpoint, options);
+  const result = await response.json();
+  
+  return result?.users?.[0]?.verifications?.[0] as Address ?? undefined;
+}
 
 /**
  * Processes payouts from a JSON file
@@ -34,7 +78,7 @@ async function sendWinnersPayout(
   if (!token || !amount) return "Error: Missing Token or Amount required fields";
 
   // Fetch current round winners
-  const winners: Winner[] = getWinners();
+  const winners: Winner[] = await getWinners();
   if (!winners || winners.length === 0) return "Error: Missing Winners";
 
   // Validate each entry has required fields
@@ -42,7 +86,7 @@ async function sendWinnersPayout(
     if (!winner.address || !winner.shares) {
       return "Error: Each winner must have 'address' and 'shares' fields";
     }
-    winner.amount = Math.floor(amount * parseInt(winner.shares) / 100);
+    winner.amount = Math.floor(amount * winner.shares / 100);
   }
 
   let successCount = 0;

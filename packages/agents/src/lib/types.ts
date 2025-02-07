@@ -1,4 +1,5 @@
 import { AgentKitOptions } from "@coinbase/agentkit";
+import { EnrichedPullRequest } from '@weeklyhackathon/github'; 
 
 export enum AgentType {
   Judge = "judge",
@@ -23,7 +24,7 @@ export type SendPrizeParams = {
 }
 
 export type ProcessSubmissionParams = {
-  submission: Submission;
+  submission: EnrichedPullRequest
 }
 
 export type Submission = {

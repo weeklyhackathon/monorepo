@@ -1,11 +1,7 @@
-import Router from "koa-router";
-import {
-  AgentType,
-  initializeAgent,
-  getAgentResponse,
-} from "@weeklyhackathon/agents";
-import { log } from "@weeklyhackathon/utils";
-import { ProcessSubmissionParams } from "@weeklyhackathon/agents";
+import Router from 'koa-router';
+import { AgentType, initializeAgent, getAgentResponse } from '@weeklyhackathon/agents';
+import { log } from '@weeklyhackathon/utils';
+import { ProcessSubmissionParams } from '@weeklyhackathon/agents'; 
 
 export const processSubmissionsRouter = new Router({
   prefix: "/api/process-submission",
@@ -25,9 +21,10 @@ processSubmissionsRouter.post("/", async (ctx) => {
   log.log(submission);
 
   try {
-    // Handle summarize submission with the hacker agent
-    const inputText = `Write the most wonderful summary highlighting the features of the following flat file of a git pull request (don't use  tools)
-      \n${submission.flatFilePR}`;
+    // Handle summarize submission with the hacker agent 
+    const inputText = 
+      `Write the most wonderful summary highlighting the features of the following diff file of a git pull request (don't use  tools)
+      \n${submission.diff}`;
 
     const { agent: hackerAgent, config: hackerConfig } = await initializeAgent(
       AgentType.Hacker
@@ -61,11 +58,30 @@ processSubmissionsRouter.post("/", async (ctx) => {
       log.info("Could not initialize the hacker agent");
       return;
     }
+    
+    const enrichedHackerSubmission =     
+      "CONTEXT START· Project Repository" + "\n========\n" +      
+      "Repository Context · Product Description" + "\n========\n" 
+      + JSON.stringify(submission.repo.productDescription) + "\n\n" +      
+      "Repository Context · Technical Architecture" + "\n========\n" 
+      + JSON.stringify(submission.repo.technicalArchitecture) + "\n\n" +   
+      "CONTEXT END" + "\n========\n\n" +     
+      
+      "Hacker Submission START" + "\n========\n" +
+      "Hacker Intro" + "\n========\n" 
+      + JSON.stringify(hackerMessages) + "\n\n" +
+      "Hacker Pull Request · Product Description" + "\n========\n" 
+      + JSON.stringify(submission.pullRequest.productAnalysis) + "\n\n" +
+      "Hacker Pull Request · Technical Architecture" + "\n========\n" 
+      + JSON.stringify(submission.pullRequest.technicalArchitecture) + "\n\n" +
+      "Hacker Pull Request · Diff file (only relevant changes)" + "\n========\n" 
+      + JSON.stringify(submission.diff) + "\n\n" +      
+      "Hacker Submission END";
 
     const judgeMessages = await getAgentResponse(
-      judgeAgent,
+      judgeAgent, 
       judgeConfig,
-      submission.flatFilePR + "\n" + JSON.stringify(hackerMessages)
+      enrichedHackerSubmission
     );
 
     ctx.body = judgeMessages[0];

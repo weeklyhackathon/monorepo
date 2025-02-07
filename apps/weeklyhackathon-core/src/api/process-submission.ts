@@ -83,6 +83,8 @@ processSubmissionsRouter.post("/", async (ctx) => {
       judgeConfig,
       enrichedHackerSubmission
     );
+    
+    ctx.body = judgeMessages[0];
 
     // Handle farcaster messages with the messenger agent
     const { agent: messengerAgent, config: messengerConfig } = await initializeAgent(
@@ -90,9 +92,8 @@ processSubmissionsRouter.post("/", async (ctx) => {
     );
 
     if (!messengerAgent || messengerConfig?.agentType !== AgentType.Messenger) {
-      ctx.status = 200;
       log.info("Could not initialize the messenger agent");
-      return judgeMessages[0];
+      return;
     }
     
     const messengerInput = 
@@ -110,8 +111,7 @@ processSubmissionsRouter.post("/", async (ctx) => {
       messengerConfig,
       messengerInput
     );
-
-    ctx.body = judgeMessages[0];
+    
     return;
   } catch (error) {
     log.error("Error in POST /api/process-submission");

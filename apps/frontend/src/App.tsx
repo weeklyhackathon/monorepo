@@ -9,27 +9,39 @@ import GitHubConnectView from "./components/GitHubConnectView";
 function App({
   authToken,
   frameContext,
-  githubUser: initialGithubUser,
+  githubUser,
+  setGithubUser,
 }: {
   authToken: string;
   frameContext: FrameContext | undefined;
   githubUser: GithubUser | null;
+  setGithubUser: (githubUser: GithubUser | null) => void;
 }) {
   const { user, isLoading, login } = useGitHub();
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [githubUser, setGithubUser] = useState<GithubUser | null>(
-    initialGithubUser
-  );
 
   // Handle GitHub OAuth callback
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get("code");
+    const state = params.get("state");
 
-    if (code) {
-      navigate("/profile", { replace: true });
+    if (code && state) {
+      try {
+        const decodedState = JSON.parse(atob(decodeURIComponent(state)));
+        const { authToken, secondAuthToken, fid } = decodedState;
+
+        navigate(
+          `/?authToken=${authToken}&secondAuthToken=${secondAuthToken}&fid=${fid}`,
+          {
+            replace: true,
+          }
+        );
+      } catch (err) {
+        console.error("Error processing OAuth callback:", err);
+      }
     }
   }, [location, navigate]);
 
@@ -45,6 +57,24 @@ function App({
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  if (location.pathname === "/github/callback") {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black/95">
+        <div className="text-[#2DFF05] flex flex-col items-center p-8 border border-[#2DFF05]/20 rounded-lg bg-black/80 backdrop-blur-sm">
+          <div className="text-2xl font-mono tracking-wider mb-4">
+            <span className="animate-pulse">{">"}</span> AUTHENTICATING
+          </div>
+          <div className="text-[#2DFF05]/80 font-mono">
+            Establishing secure connection to GitHub...
+          </div>
+          <div className="mt-4 text-sm text-[#2DFF05]/60 animate-pulse">
+            [==================] 100%
+          </div>
+        </div>
       </div>
     );
   }
@@ -143,6 +173,7 @@ function App({
                 href="https://www.clanker.world/clanker/0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-[#2DFF05] hover:text-gray-200 transition-colors"
               >
                 clanker
               </a>{" "}
@@ -178,29 +209,37 @@ function App({
     return (
       <div className="flex flex-col items-center justify-start pt-20 px-4">
         <div className="text-center">
+          <div className="relative border border-[#2DFF05]/20 p-3 rounded bg-black/40 p-4">
+            {user.avatar_url && (
+              <div className="relative mx-auto w-20 h-20 mb-4">
+                <img
+                  src={user.avatar_url}
+                  alt={user.name || user.login}
+                  className="w-20 h-20 rounded-full border-2 border-[#2DFF05] shadow-[0_0_15px_rgba(45,255,5,0.3)]"
+                />
+                <div className="absolute -inset-1 bg-[#2DFF05]/10 rounded-full blur-sm -z-10"></div>
+              </div>
+            )}
+            <h1 className="text-2xl font-bold text-[#2DFF05] mb-2 tracking-wider font-mono">
+              &lt;{user.name || user.login}&gt;_
+            </h1>
+            {user.login && (
+              <p className="text-[#2DFF05]/60 mb-4 font-mono">@{user.login}</p>
+            )}
+            {user.bio && (
+              <p className="text-[#2DFF05]/80 mb-4 max-w-md mx-auto font-mono ">
+                {user.bio}
+              </p>
+            )}
+          </div>
           <p className="text-gray-400 mb-2">Connected via GitHub</p>
-          {user.avatar_url && (
-            <img
-              src={user.avatar_url}
-              alt={user.name || user.login}
-              className="w-20 h-20 rounded-full border-2 border-[#2DFF05] mx-auto mb-4"
-            />
-          )}
-          <h1 className="text-2xl font-bold text-[#2DFF05] mb-2">
-            {user.name || user.login}
-          </h1>
-          {user.login && <p className="text-gray-400 mb-4">@{user.login}</p>}
-          {user.bio && (
-            <p className="text-gray-300 mb-4 max-w-md mx-auto">{user.bio}</p>
-          )}
-          <a
-            href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors"
-          >
-            back to frame
-          </a>
+
+          <p className="text-2xl font-bold text-[#2DFF05] mb-4 tracking-wider">
+            Welcome to $HACKATHON
+          </p>
+          <p className="text-lg text-[#2DFF05]/80">
+            You can now close this tab and go back to the frame
+          </p>
         </div>
       </div>
     );

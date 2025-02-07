@@ -1,8 +1,10 @@
+import fs from 'node:fs/promises';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { log } from '@weeklyhackathon/utils';
 import { askDeepseek } from '@weeklyhackathon/utils/askDeepseek';
 import { tokenize } from '@weeklyhackathon/utils/tokenize';
+
 
 // Maximum tokens for our LLM context (reserve a margin for the prompt)
 const MAX_TOKENS = 58000;
@@ -181,10 +183,7 @@ async function buildRepoContext(
  * - topics: a list of product-related categories
  * - productDescription: a 200-400 word explanation of the product
  */
-async function analyzeProduct(context: string): Promise<{
-  topics: string[];
-  productDescription: string;
-}> {
+async function analyzeProduct(context: string): Promise<string> {
   const prompt = `
 Please analyze the following GitHub repository code and provide a product analysis.
 Focus on describing what the repository does as a product, its key functionalities, and the user benefits.
@@ -208,9 +207,7 @@ ${context}
  * - technicalArchitecture: a 200-400 word description of the technical design, frameworks,
  *   key components, design patterns, and other relevant details.
  */
-async function analyzeTechnical(context: string): Promise<{
-  technicalArchitecture: string;
-}> {
+async function analyzeTechnical(context: string): Promise<string> {
   const prompt = `
 Please analyze the following GitHub repository code and provide a technical architecture analysis.
 Focus on describing the technical design, main components, frameworks, design patterns, dependencies, and interactions.
@@ -240,8 +237,8 @@ export async function processRepo({
   repoOwner: string;
   repoName: string;
 }): Promise<{
-  productAnalysis: { topics: string[]; productDescription: string };
-  technicalAnalysis: { technicalArchitecture: string };
+  productAnalysis: string;
+  technicalAnalysis: string;
 }> {
   log.info('--------------------------------');
   log.info(`Processing repo: https://github.com/${repoOwner}/${repoName}`);
@@ -265,6 +262,7 @@ export async function processRepo({
     '.vscode',
     'docs',
     'examples',
+    'package-lock.json',
     'docker',
     /\.d\.ts$/  // ignore type definition files
   ];
@@ -275,19 +273,52 @@ export async function processRepo({
 
 
   // // Get the two analyses in parallel.
-  const [productAnalysis, technicalAnalysis] = await Promise.all([
-    analyzeProduct(context),
-    analyzeTechnical(context)
-  ]);
+  log.info('Analyzing product...');
+  const productAnalysis = await analyzeProduct(context);
+
+  log.info('Analyzing technical architecture...');
+  const technicalAnalysis = await analyzeTechnical(context);
 
   const enrichedData = {
     productAnalysis,
     technicalAnalysis,
+    summary: '',
     repoUrl: `https://github.com/${repoOwner}/${repoName}`
   };
 
+  const summary = await askDeepseek({
+    message: `Please summarize the following repository analysis: ${JSON.stringify(enrichedData)}`,
+    systemPrompt: 'You are a helpful assistant that can summarize repository analyses.'
+  });
+
+  enrichedData.summary = summary;
 
   // log.info('--------------------------------');
 
   return enrichedData;
 }
+
+
+// processRepo({
+//   repoOwner: 'weeklyhackathon',
+//   repoName: 'monorepo'
+// }).then(async(data) => {
+
+//   console.log('Finished processing repo');
+
+//   const formattedAnalysis = await askDeepseek({
+//     message: `Format the following product analysis into a markdown file:\r\n${data.productAnalysis}`,
+//     systemPrompt: 'You are a helpful assistant that can format product analysis.'
+//   });
+
+//   await fs.writeFile('analysis.md', formattedAnalysis);
+//   // await saveRepo({
+//   //   analysis: {
+//   //     productDescription: data.productAnalysis,
+//   //     technicalArchitecture: data.technicalAnalysis,
+//   //     summary: 'This is a summary'
+//   //   },
+//   //   owner: 'weeklyhackathon',
+//   //   name: 'monorepo'
+//   // });
+// });

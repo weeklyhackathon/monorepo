@@ -55,7 +55,7 @@ processSubmissionsRouter.post("/", async (ctx) => {
 
     if (!judgeAgent || judgeConfig?.agentType !== AgentType.Judge) {
       ctx.status = 200;
-      log.info("Could not initialize the hacker agent");
+      log.info("Could not initialize the judge agent");
       return;
     }
     
@@ -83,11 +83,38 @@ processSubmissionsRouter.post("/", async (ctx) => {
       judgeConfig,
       enrichedHackerSubmission
     );
-
+    
     ctx.body = judgeMessages[0];
+
+    // Handle farcaster messages with the messenger agent
+    const { agent: messengerAgent, config: messengerConfig } = await initializeAgent(
+      AgentType.Messenger
+    );
+
+    if (!messengerAgent || messengerConfig?.agentType !== AgentType.Messenger) {
+      log.info("Could not initialize the messenger agent");
+      return;
+    }
+    
+    const messengerInput = 
+      "Format the following content and send both casts (posts) to the farcaster social network." + "\n\n" +
+      "CONTENT HACKER START" + "\n========\n" +
+      JSON.stringify(hackerMessages) + "\n\n" +
+      "CONTENT HACKER END" + "\n\n" +
+      
+      "CONTENT JUDGE START" + "\n========\n" +
+      JSON.stringify(judgeMessages) + "\n\n" +
+      "CONTENT JUDGE END"; 
+    
+    const messengerMessages = await getAgentResponse(
+      messengerAgent, 
+      messengerConfig,
+      messengerInput
+    );
+    
     return;
   } catch (error) {
-    log.error("Error in POST /api/send-prizes");
+    log.error("Error in POST /api/process-submission");
     log.error(error);
   }
 

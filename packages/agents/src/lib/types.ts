@@ -5,7 +5,8 @@ import { EnrichedPullRequest } from '@weeklyhackathon/github';
 export enum AgentType {
   Judge = "judge",
   Hacker = "hacker",
-  Payment = "payment"
+  Payment = "payment",
+  Messenger = "messenger"
 }
 
 export type Agent = any;

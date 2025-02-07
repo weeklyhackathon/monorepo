@@ -6,9 +6,15 @@ import { ChatOpenAI } from "@langchain/openai";
 //import { ChatAnthropic } from "@langchain/anthropic";
 import { log } from "@weeklyhackathon/utils";
 import { validateAgentEnv } from "@weeklyhackathon/utils";
-import { getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
-import { hackerAgentPrompt, judgeAgentPrompt, paymentAgentPrompt } from "./constants";
+import { getSendCastTool, getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
 import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
+import { 
+  hackerAgentPrompt, 
+  judgeAgentPrompt, 
+  paymentAgentPrompt, 
+  messengerAgentPrompt 
+} from "./constants";
+
 
 /**
  * Initialize the agent with CDP Agentkit
@@ -18,7 +24,7 @@ import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
 export async function initializeAgent(agentType: AgentType): Promise<AgentWithConfig> {
   if (!validateAgentEnv()) return {};
 
-  try {   
+  try {
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY as string,
       model: "gpt-4o-mini",
@@ -49,17 +55,25 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     if (agentType === AgentType.Payment) {
       // Get an instance of the winners payout tool
       const winnersPayoutTool = getWinnersPayoutTool(agentkit);
+      // Get an instance of the claim clanker rewards tool
       const claimClankerRewardsTool = getClaimClankerRewardsTool(agentkit);
       // Add the tools to your toolkit
       tools.push(winnersPayoutTool);    
       tools.push(claimClankerRewardsTool);
+    }
+    
+    if (agentType === AgentType.Messenger) {
+      // Get an instance of the send cast tool
+      const sendCastTool = getSendCastTool(agentkit);
+      // Add the tools to your toolkit
+      tools.push(sendCastTool);
     }
 
     // Store buffered conversation history in memory
     const memory = new MemorySaver();
     const agentConfig = {
       agentType,
-      configurable: { thread_id: "Hackathon Agent!" }
+      configurable: { thread_id: "WHackathon Agent!" }
     };
 
     // Create React Agent using the LLM and CDP Agentkit tools
@@ -68,6 +82,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
       tools,
       checkpointSaver: memory,
       messageModifier:
+       agentType === AgentType.Messenger ? messengerAgentPrompt : 
        agentType === AgentType.Payment ? paymentAgentPrompt : 
        agentType === AgentType.Judge ? judgeAgentPrompt : 
        agentType === AgentType.Hacker ? hackerAgentPrompt : ""

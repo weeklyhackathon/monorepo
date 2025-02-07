@@ -8,7 +8,7 @@ import { Agent, AgentConfig } from "@weeklyhackathon/agents";
  * @param config - Agent configuration
  * @param input - The input for the agent
  */
-export async function getAgentResponse(agent: Agent, config: AgentConfig, input: string): Promise<any[]> {
+export async function getAgentResponse(agent: Agent, config: AgentConfig, input: string): Promise<string[]> {
   try {
     const stream = await agent.stream(
       { messages: [new HumanMessage(input)] },
@@ -28,8 +28,6 @@ export async function getAgentResponse(agent: Agent, config: AgentConfig, input:
             if (c?.text) agentResponses.push(c.text);
           }          
         }
-      
-        //agentResponses.push(chunk.agent.messages[0].content);
       } else if ("tools" in chunk) {
         const content = chunk.tools.messages[0].content;
         
@@ -40,11 +38,8 @@ export async function getAgentResponse(agent: Agent, config: AgentConfig, input:
             if (c?.text) agentResponses.push(c.text);
           }          
         }
-        
-        //agentResponses.push(chunk.tools.messages[0].content);
       }
-    }
-    
+    }    
     
     log.log(agentResponses.join("\n"));
     

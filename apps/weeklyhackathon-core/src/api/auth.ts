@@ -228,6 +228,7 @@ authRouter.post("/get-farcaster-user-information", async (ctx) => {
  */
 authRouter.post("/github/callback", async (ctx) => {
   try {
+    console.log("Received GitHub callback");
     const { code, authToken, secondAuthToken, fid } = ctx.request.body as {
       code: string;
       authToken: string;

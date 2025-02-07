@@ -136,9 +136,19 @@ const GitHubConnectView: React.FC<GitHubConnectViewProps> = ({
   return (
     <div className="flex items-center justify-center h-screen bg-black/95">
       <div className="text-[#2DFF05] flex flex-col items-center max-w-md p-8 border border-[#2DFF05]/20 rounded-lg bg-black/80 backdrop-blur-sm">
-        <h2 className="text-3xl font-bold mb-6 tracking-wider">
-          CONNECT GITHUB
-        </h2>
+        <h2 className="text-3xl font-bold mb-6 tracking-wider">$HACKATHON</h2>
+        <p className="text-lg text-center mb-4 text-[#2DFF05]/80">
+          To access your hacker dashboard, you need to connect your github
+          account.
+        </p>
+        <p className="text-lg text-center mb-4 text-[#2DFF05]/80">
+          After doing this, you will be able to submit your favorite PR of that
+          week to have it reviewed and judged by our AI agents.
+        </p>
+        <p className="text-lg text-center mb-8 text-[#2DFF05]/80">
+          They will create the weekly leaderboard. The top 8 hackers will be
+          rewarded a % of the trading fees of the token for that given period.
+        </p>
 
         {connectionStatus === "connected" ? (
           <div className="text-center">
@@ -146,7 +156,7 @@ const GitHubConnectView: React.FC<GitHubConnectViewProps> = ({
               ✓ GitHub Connected Successfully!
             </div>
             <div className="text-lg text-gray-400">
-              Loading your dashboard...
+              If you see this message, please refresh the frame.
             </div>
           </div>
         ) : (
@@ -154,7 +164,7 @@ const GitHubConnectView: React.FC<GitHubConnectViewProps> = ({
             <button
               onClick={handleConnectClick}
               disabled={connectionStatus === "connecting"}
-              className={`px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] transition-colors text-2xl ${
+              className={`px-6 py-2 bg-[#2b2b2b] rounded-lg hover:bg-[#3b3b3b] hover:cursor-pointer transition-colors text-2xl ${
                 connectionStatus === "connecting"
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -164,7 +174,7 @@ const GitHubConnectView: React.FC<GitHubConnectViewProps> = ({
                 ? "Connecting..."
                 : "Connect GitHub Account"}
             </button>
-            <small className="mt-4 text-lg w-2/3 mx-auto text-center text-gray-400">
+            <small className="mt-4 text-lg w-full px-4 mx-auto text-center text-gray-400">
               This will open a new tab on your browser for GitHub authentication
             </small>
           </>

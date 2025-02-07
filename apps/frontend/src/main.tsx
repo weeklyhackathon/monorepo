@@ -89,6 +89,7 @@ function Root() {
         setFrameContext(sdkFrameContext as FrameContext);
         setAuthToken(data.authToken);
         if (data.githubUser) {
+          console.log("Setting github user...", data.githubUser);
           setGithubUser(data.githubUser);
         }
       } else {
@@ -117,6 +118,7 @@ function Root() {
                   authToken={authToken}
                   frameContext={frameContext}
                   githubUser={githubUser}
+                  setGithubUser={setGithubUser}
                 />
               }
             />

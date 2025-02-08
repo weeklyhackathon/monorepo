@@ -1,7 +1,8 @@
 import type { FrameContext } from '@weeklyhackathon/telegram/types';
 import Router from 'koa-router';
 import { prisma } from '@weeklyhackathon/db';
-import { env,
+import { userPathFromFid,
+  env,
   log,
   POST,
   GET,
@@ -10,6 +11,8 @@ import { env,
   createGithubAuthToken,
   validateGithubAuthToken,
   checkGithubConnection } from '@weeklyhackathon/utils';
+import { getUserByFid } from '@weeklyhackathon/utils/getUserByFid';
+
 
 export const authRouter = new Router({
   prefix: '/api/auth'
@@ -43,16 +46,16 @@ authRouter.post('/register-frame-opened', async (ctx) => {
   } = ctx.request.body as { frameContext: FrameContext };
   log.info('📝 Received frame context:', frameContext);
 
+  let user = await getUserByFid(frameContext.user.fid);
+
   try {
     // Create or update user in our database
     // If user exists, this just returns the existing user
     // If user is new, creates Farcaster user record
-    const user = await prisma.user.upsert({
-      where: {
-        path: `fc_${frameContext.user.fid}`
-      },
-      create: {
-        path: `fc_${frameContext.user.fid}`,
+    user = user ?? await prisma.user.create({
+
+      data: {
+        path: userPathFromFid(frameContext.user.fid),
         displayName:
           frameContext.user.username ?? frameContext.user.fid.toString(),
         farcasterUser: {
@@ -63,12 +66,17 @@ authRouter.post('/register-frame-opened', async (ctx) => {
           }
         }
       },
-      update: {},
       include: {
         githubUser: true
       }
     });
-    console.log('IN HEREEEEE ', user);
+    log.info('IN HEREEEEE ', user);
+
+    const githubUser = await prisma.githubUser.findFirst({
+      where: {
+        userId: user.id
+      }
+    });
 
     // Create auth session for potential GitHub connection
     // This generates a token that will be used to verify the user's
@@ -84,8 +92,8 @@ authRouter.post('/register-frame-opened', async (ctx) => {
 
     ctx.body = {
       authToken,
-      hasGithub: !!user.githubUser,
-      githubUser: user.githubUser
+      hasGithub: !!githubUser,
+      githubUser: githubUser
     };
   } catch (error) {
     log.error('💥 Error in register-frame-opened:', error);
@@ -135,7 +143,6 @@ authRouter.post('/register-gh-login', async (ctx) => {
     // Check if user already has GitHub connected
     const user = await prisma.user.findFirst({
       where: {
-        path: `fc_${frameContext.user.fid}`,
         farcasterUser: {
           farcasterId: frameContext.user.fid
         }
@@ -191,7 +198,6 @@ authRouter.post('/get-farcaster-user-information', async (ctx) => {
   // Get user and farcaster information
   const user = await prisma.user.findFirst({
     where: {
-      path: `fc_${fid}`,
       farcasterUser: {
         farcasterId: fid
       }
@@ -246,7 +252,7 @@ authRouter.post('/get-farcaster-user-information', async (ctx) => {
  */
 authRouter.post('/github/callback', async (ctx) => {
   try {
-    console.log('Received GitHub callback');
+    log.info('Received GitHub callback');
     const {
       code, authToken, secondAuthToken, fid
     } = ctx.request.body as {
@@ -312,10 +318,18 @@ authRouter.post('/github/callback', async (ctx) => {
 
     log.info('Connecting GitHub account to Farcaster user');
 
+    const user = await prisma.user.findFirstOrThrow({
+      where: {
+        farcasterUser: {
+          farcasterId: fid
+        }
+      }
+    });
+
     // Connect GitHub account to user's Farcaster account
     const updatedUser = await prisma.user.update({
       where: {
-        path: `fc_${fid}`
+        id: user.id
       },
       data: {
         githubUser: {

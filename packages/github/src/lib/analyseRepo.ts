@@ -1,5 +1,7 @@
+import type { GithubRepo } from '@weeklyhackathon/db';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
+import { prisma } from '@weeklyhackathon/db';
 import { log } from '@weeklyhackathon/utils';
 import { askDeepseek } from '@weeklyhackathon/utils/askDeepseek';
 import { tokenize } from '@weeklyhackathon/utils/tokenize';
@@ -232,14 +234,35 @@ ${context}
  */
 export async function analyseRepoAndSaveResult({
   repoOwner,
-  repoName
+  repoName,
+  forceRefresh = false
 }: {
   repoOwner: string;
   repoName: string;
-}): Promise<{
-  productAnalysis: string;
-  technicalAnalysis: string;
-}> {
+  forceRefresh?: boolean;
+}): Promise<NonNullable<Pick<GithubRepo, 'productDescription' | 'technicalArchitecture' | 'summary'>>> {
+
+  // If the repo already exists and we're not forcing a refresh, return the existing data first
+  if (!forceRefresh) {
+    const existingRepo = await prisma.githubRepo.findUnique({
+      where: {
+        owner_name: {
+          owner: repoOwner,
+          name: repoName
+        }
+      }
+    });
+
+    if (existingRepo && existingRepo.productDescription && existingRepo.technicalArchitecture && existingRepo.summary) {
+      log.info(`Repo ${repoOwner}/${repoName} already exists. Skipping analysis.`);
+      return {
+        productDescription: existingRepo.productDescription,
+        technicalArchitecture: existingRepo.technicalArchitecture,
+        summary: existingRepo.summary
+      };
+    }
+  }
+
   log.info('--------------------------------');
   log.info(`Processing repo: https://github.com/${repoOwner}/${repoName}`);
 
@@ -280,8 +303,8 @@ export async function analyseRepoAndSaveResult({
   const technicalAnalysis = await analyzeTechnical(context);
 
   const enrichedData = {
-    productAnalysis,
-    technicalAnalysis,
+    productDescription: productAnalysis,
+    technicalArchitecture: technicalAnalysis,
     summary: '',
     repoUrl: `https://github.com/${repoOwner}/${repoName}`
   };
@@ -297,8 +320,8 @@ export async function analyseRepoAndSaveResult({
     name: repoName,
     owner: repoOwner,
     analysis: {
-      productDescription: enrichedData.productAnalysis,
-      technicalArchitecture: enrichedData.technicalAnalysis,
+      productDescription: enrichedData.productDescription,
+      technicalArchitecture: enrichedData.technicalArchitecture,
       summary: enrichedData.summary
     }
   });

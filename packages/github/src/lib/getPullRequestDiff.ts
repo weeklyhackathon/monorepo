@@ -30,7 +30,9 @@ interface PRDiffParams {
 }
 
 export async function getPullRequestDiff(params: PRDiffParams): Promise<string> {
-  const { owner, repo, prNumber } = params;
+  const {
+    owner, repo, prNumber
+  } = params;
   const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`;
 
   const headers: { [key: string]: string } = {
@@ -38,20 +40,22 @@ export async function getPullRequestDiff(params: PRDiffParams): Promise<string> 
   };
 
   try {
-    const response = await fetch(url, { headers });
-    
+    const response = await fetch(url, {
+      headers
+    });
+
     if (!response.ok) {
       log.log(`Failed to fetch PR diff: ${response.statusText}`);
     }
 
     const diff = await response.text();
-    
+
     return filterDiff(diff, ignorePatterns);
   } catch (err) {
     log.error('Error fetching pull request diff');
     log.error(err);
   }
-  return "";
+  return '';
 }
 
 
@@ -79,4 +83,3 @@ function filterDiff(diff: string, ignorePatterns: (string | RegExp)[]): string {
 
   return filteredDiff;
 }
-

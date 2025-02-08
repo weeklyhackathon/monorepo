@@ -1,23 +1,26 @@
 // App.tsx
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { GithubUser, useGitHub } from "./components/providers/GithubProvider";
-import { FrameContext } from "./components/providers/FarcasterProvider";
-import HackerDashboard from "./components/HackerDashboard";
-import GitHubConnectView from "./components/GitHubConnectView";
+import type { FrameContext } from './components/providers/FarcasterProvider';
+import type { GithubUser } from './components/providers/GithubProvider';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import GitHubConnectView from './components/GitHubConnectView';
+import HackerDashboard from './components/HackerDashboard';
+import { useGitHub } from './components/providers/GithubProvider';
 
 function App({
   authToken,
   frameContext,
   githubUser,
-  setGithubUser,
+  setGithubUser
 }: {
   authToken: string;
   frameContext: FrameContext | undefined;
   githubUser: GithubUser | null;
   setGithubUser: (githubUser: GithubUser | null) => void;
 }) {
-  const { user, isLoading, login } = useGitHub();
+  const {
+    user, isLoading, login
+  } = useGitHub();
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -25,22 +28,24 @@ function App({
   // Handle GitHub OAuth callback
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const code = params.get("code");
-    const state = params.get("state");
+    const code = params.get('code');
+    const state = params.get('state');
 
     if (code && state) {
       try {
         const decodedState = JSON.parse(atob(decodeURIComponent(state)));
-        const { authToken, secondAuthToken, fid } = decodedState;
+        const {
+          authToken, secondAuthToken, fid
+        } = decodedState;
 
         navigate(
           `/?authToken=${authToken}&secondAuthToken=${secondAuthToken}&fid=${fid}`,
           {
-            replace: true,
+            replace: true
           }
         );
       } catch (err) {
-        console.error("Error processing OAuth callback:", err);
+        console.error('Error processing OAuth callback:', err);
       }
     }
   }, [location, navigate]);
@@ -61,12 +66,12 @@ function App({
     );
   }
 
-  if (location.pathname === "/github/callback") {
+  if (location.pathname === '/github/callback') {
     return (
       <div className="flex items-center justify-center h-screen bg-black/95">
         <div className="text-[#2DFF05] flex flex-col items-center p-8 border border-[#2DFF05]/20 rounded-lg bg-black/80 backdrop-blur-sm">
           <div className="text-2xl font-mono tracking-wider mb-4">
-            <span className="animate-pulse">{">"}</span> AUTHENTICATING
+            <span className="animate-pulse">{'>'}</span> AUTHENTICATING
           </div>
           <div className="text-[#2DFF05]/80 font-mono">
             Establishing secure connection to GitHub...
@@ -81,7 +86,7 @@ function App({
 
   // Frame View - Show Connect Button
   if (frameContext?.user.fid) {
-    console.log("IN HERE", githubUser, frameContext);
+    console.log('IN HERE', githubUser, frameContext);
     if (githubUser && githubUser.username) {
       return (
         <HackerDashboard frameContext={frameContext} githubUser={githubUser} />
@@ -92,7 +97,11 @@ function App({
       <GitHubConnectView
         frameContext={frameContext}
         authToken={authToken}
-        onSuccess={({ frameContext: { githubUser } }) => {
+        onSuccess={({
+          frameContext: {
+            githubUser
+          }
+        }) => {
           setGithubUser(githubUser);
         }}
         error={error}
@@ -103,9 +112,9 @@ function App({
 
   // Web View - Show Farcaster Info and GitHub Connect Button
   const params = new URLSearchParams(location.search);
-  const urlAuthToken = params.get("authToken");
-  const urlSecondAuthToken = params.get("secondAuthToken");
-  const urlFid = params.get("fid");
+  const urlAuthToken = params.get('authToken');
+  const urlSecondAuthToken = params.get('secondAuthToken');
+  const urlFid = params.get('fid');
 
   if (urlAuthToken && urlSecondAuthToken && urlFid && !user) {
     return (
@@ -129,7 +138,7 @@ function App({
 
           <button
             onClick={login}
-            className="w-full px-8 py-4 bg-[#2DFF05]/10 border border-[#2DFF05]/30 rounded-lg 
+            className="w-full px-8 py-4 bg-[#2DFF05]/10 border border-[#2DFF05]/30 rounded-lg
                      hover:bg-[#2DFF05]/20 hover:border-[#2DFF05]/50 hover:shadow-[0_0_15px_rgba(45,255,5,0.2)]
                      transition-all duration-300 text-lg tracking-wide hover:cursor-pointer"
           >
@@ -149,14 +158,14 @@ function App({
           <div
             onClick={(event) => {
               navigator.clipboard.writeText(
-                "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb"
+                '0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb'
               );
               const el = event.currentTarget as HTMLDivElement;
-              el.classList.add("text-[#2DFF05]/50");
-              el.textContent = "Copied!";
+              el.classList.add('text-[#2DFF05]/50');
+              el.textContent = 'Copied!';
               setTimeout(() => {
-                el.classList.remove("text-[#2DFF05]/50");
-                el.textContent = "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb";
+                el.classList.remove('text-[#2DFF05]/50');
+                el.textContent = '0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb';
               }, 1000);
             }}
             className="font-mek text-lg mb-8 cursor-pointer hover:text-[#2DFF05]/80 transition-colors"
@@ -168,7 +177,7 @@ function App({
             <p>Submit your best PRs, compete weekly, earn rewards.</p>
             <p>Judged by AI. Paid by smart contracts. Pure meritocracy.</p>
             <p>
-              All prizes come from $hackathon trading fees - a{" "}
+              All prizes come from $hackathon trading fees - a{' '}
               <a
                 href="https://www.clanker.world/clanker/0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb"
                 target="_blank"
@@ -176,12 +185,12 @@ function App({
                 className="text-[#2DFF05] hover:text-gray-200 transition-colors"
               >
                 clanker
-              </a>{" "}
+              </a>{' '}
               token.
             </p>
           </div>
           <div className="text-lg text-[#2DFF05]/50 mb-6">
-            Access the full experience through{" "}
+            Access the full experience through{' '}
             <a
               href="https://warpcast.com/"
               target="_blank"
@@ -238,7 +247,7 @@ function App({
             Welcome to $HACKATHON
           </p>
           <p className="text-lg text-[#2DFF05]/80">
-            You can now close this tab and{" "}
+            You can now close this tab and{' '}
             <a
               href="https://warpcast.com/~/frames/launch?domain=weeklyhackathon.com"
               target="_blank"

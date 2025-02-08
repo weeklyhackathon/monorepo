@@ -20,7 +20,7 @@ startCronJobs();
 configureBot();
 
 
-/// must run this once to set up the nillion vault 
+/// must run this once to set up the nillion vault
 /// create the schema and write the PK secret in the vault
 /// (it was already done, just ignore it)
 //createSchema();

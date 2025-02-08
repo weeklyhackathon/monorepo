@@ -1,19 +1,18 @@
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
-import { CdpToolkit } from "@coinbase/cdp-langchain";
-import { MemorySaver } from "@langchain/langgraph";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
+import type { AgentWithConfig } from './types';
+import { CdpAgentkit } from '@coinbase/cdp-agentkit-core';
+import { CdpToolkit } from '@coinbase/cdp-langchain';
+import { MemorySaver } from '@langchain/langgraph';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { ChatOpenAI } from '@langchain/openai';
 //import { ChatAnthropic } from "@langchain/anthropic";
-import { log } from "@weeklyhackathon/utils";
-import { validateAgentEnv } from "@weeklyhackathon/utils";
-import { getSendCastTool, getWinnersPayoutTool, getClaimClankerRewardsTool } from "./tools";
-import { AgentType, Agent, AgentConfig, AgentWithConfig } from "./types";
-import { 
-  hackerAgentPrompt, 
-  judgeAgentPrompt, 
-  paymentAgentPrompt, 
-  messengerAgentPrompt 
-} from "./constants";
+import { log } from '@weeklyhackathon/utils';
+import { validateAgentEnv } from '@weeklyhackathon/utils';
+import { hackerAgentPrompt,
+  judgeAgentPrompt,
+  paymentAgentPrompt,
+  messengerAgentPrompt } from './constants';
+import { getSendCastTool, getWinnersPayoutTool, getClaimClankerRewardsTool } from './tools';
+import { AgentType, Agent, AgentConfig } from './types';
 
 
 /**
@@ -27,7 +26,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
   try {
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY as string,
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini'
     });
     /*
     const llm = new ChatAnthropic({
@@ -37,11 +36,11 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     */
 
     // Get coinbase mpc wallet data from env file
-    let walletDataStr: string = process.env.WALLET_DATA_STR || "";
+    const walletDataStr: string = process.env.WALLET_DATA_STR || '';
     // Configure CDP Agentkit
     const config = {
       cdpWalletData: walletDataStr || undefined,
-      networkId: process.env.NETWORK_ID || "base-sepolia",
+      networkId: process.env.NETWORK_ID || 'base-sepolia'
     };
 
     // Initialize CDP agentkit
@@ -58,10 +57,10 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
       // Get an instance of the claim clanker rewards tool
       const claimClankerRewardsTool = getClaimClankerRewardsTool(agentkit);
       // Add the tools to your toolkit
-      tools.push(winnersPayoutTool);    
+      tools.push(winnersPayoutTool);
       tools.push(claimClankerRewardsTool);
     }
-    
+
     if (agentType === AgentType.Messenger) {
       // Get an instance of the send cast tool
       const sendCastTool = getSendCastTool(agentkit);
@@ -73,7 +72,9 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     const memory = new MemorySaver();
     const agentConfig = {
       agentType,
-      configurable: { thread_id: "WHackathon Agent!" }
+      configurable: {
+        thread_id: 'WHackathon Agent!'
+      }
     };
 
     // Create React Agent using the LLM and CDP Agentkit tools
@@ -82,15 +83,18 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
       tools,
       checkpointSaver: memory,
       messageModifier:
-       agentType === AgentType.Messenger ? messengerAgentPrompt : 
-       agentType === AgentType.Payment ? paymentAgentPrompt : 
-       agentType === AgentType.Judge ? judgeAgentPrompt : 
-       agentType === AgentType.Hacker ? hackerAgentPrompt : ""
+       agentType === AgentType.Messenger ? messengerAgentPrompt :
+         agentType === AgentType.Payment ? paymentAgentPrompt :
+           agentType === AgentType.Judge ? judgeAgentPrompt :
+             agentType === AgentType.Hacker ? hackerAgentPrompt : ''
     });
 
-    return { agent, config: agentConfig };
+    return {
+      agent,
+      config: agentConfig
+    };
   } catch (error) {
-    log.error("Failed to initialize agent:", error);
+    log.error('Failed to initialize agent:', error);
   }
   return {};
 }

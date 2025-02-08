@@ -1,11 +1,9 @@
-import {
-  createContext,
+import type { ReactNode } from 'react';
+import sdk from '@farcaster/frame-sdk';
+import { createContext,
   useContext,
   useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import sdk from "@farcaster/frame-sdk";
+  useEffect } from 'react';
 
 interface SafeAreaInsets {
   top: number;
@@ -57,13 +55,13 @@ const FarcasterContext = createContext<FarcasterContextType>({
   error: null,
   frameContext: null,
   openUrl: async () => {},
-  isFarcasterFrame: true,
+  isFarcasterFrame: true
 });
 
 export const useFarcaster = () => {
   const context = useContext(FarcasterContext);
   if (!context) {
-    throw new Error("useFarcaster must be used within a FarcasterProvider");
+    throw new Error('useFarcaster must be used within a FarcasterProvider');
   }
   return context;
 };
@@ -73,7 +71,7 @@ interface FarcasterProviderProps {
 }
 
 export default function FarcasterProvider({
-  children,
+  children
 }: FarcasterProviderProps) {
   const [fid, setFid] = useState<number | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -84,29 +82,29 @@ export default function FarcasterProvider({
 
   useEffect(() => {
     const initializeFarcaster = async () => {
-      console.log("Starting Farcaster initialization...");
+      console.log('Starting Farcaster initialization...');
       try {
         // Get frame context
-        console.log("Fetching frame context...");
+        console.log('Fetching frame context...');
         const context = (await sdk.context) as FrameContext;
-        console.log("Received frame context:", context);
+        console.log('Received frame context:', context);
         setFrameContext(context);
 
         if (context?.user?.fid) {
-          console.log("Found user FID:", context.user.fid);
+          console.log('Found user FID:', context.user.fid);
           setFid(context.user.fid);
           setIsConnected(true);
-          console.log("User connected successfully");
+          console.log('User connected successfully');
         } else {
-          console.log("No FID found, setting as non-Farcaster frame");
+          console.log('No FID found, setting as non-Farcaster frame');
           setIsFarcasterFrame(false);
         }
       } catch (err) {
-        console.error("Error initializing Farcaster:", err);
-        setError("Failed to initialize Farcaster connection");
-        console.log("Initialization failed with error:", err);
+        console.error('Error initializing Farcaster:', err);
+        setError('Failed to initialize Farcaster connection');
+        console.log('Initialization failed with error:', err);
       } finally {
-        console.log("Initialization complete, setting loading to false");
+        console.log('Initialization complete, setting loading to false');
         setIsLoading(false);
       }
     };
@@ -120,10 +118,10 @@ export default function FarcasterProvider({
       if (context?.user?.fid) {
         await sdk.actions.openUrl(url);
       } else {
-        window.open(url, "_blank");
+        window.open(url, '_blank');
       }
     } catch (error) {
-      window.open(url, "_blank");
+      window.open(url, '_blank');
     }
   };
 
@@ -134,7 +132,7 @@ export default function FarcasterProvider({
     error,
     frameContext,
     openUrl,
-    isFarcasterFrame,
+    isFarcasterFrame
   };
 
   return (

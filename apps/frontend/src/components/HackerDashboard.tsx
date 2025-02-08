@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { HackerDashboardProps, PullRequest } from "../types";
-import { LuScrollText } from "react-icons/lu";
-import { MdOutlineEdit } from "react-icons/md";
+import type { HackerDashboardProps, PullRequest } from '../types';
+import { useEffect, useState } from 'react';
+import { LuScrollText } from 'react-icons/lu';
+import { MdOutlineEdit } from 'react-icons/md';
 
 interface TimeLeft {
   days: number;
@@ -12,15 +12,15 @@ interface TimeLeft {
 
 const HackerDashboard = ({
   githubUser,
-  frameContext,
+  frameContext
 }: HackerDashboardProps) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0,
+    seconds: 0
   });
-  const [prUrl, setPrUrl] = useState("");
+  const [prUrl, setPrUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
@@ -42,14 +42,14 @@ const HackerDashboard = ({
           }`,
           {
             headers: {
-              "Content-Type": "application/json",
-              "x-api-key": import.meta.env.VITE_API_KEY,
-            },
+              'Content-Type': 'application/json',
+              'x-api-key': import.meta.env.VITE_API_KEY
+            }
           }
         );
 
         const data = await response.json();
-        console.log("THE DATA OF THE PR HISTORY", data);
+        console.log('THE DATA OF THE PR HISTORY', data);
         if (response.ok) {
           setPrHistory(data.pullRequests);
 
@@ -68,7 +68,7 @@ const HackerDashboard = ({
           setCurrentCyclePR(currentCyclePR || null);
         }
       } catch (err) {
-        console.error("Failed to fetch PR history:", err);
+        console.error('Failed to fetch PR history:', err);
       } finally {
         setIsLoadingHistory(false);
       }
@@ -92,7 +92,7 @@ const HackerDashboard = ({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
+        seconds: Math.floor((difference / 1000) % 60)
       });
     };
 
@@ -108,19 +108,19 @@ const HackerDashboard = ({
       const prUrlPattern =
         /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/;
 
-      if (!prUrl.hostname.includes("github.com")) {
-        setError("Please enter a valid GitHub pull request URL");
+      if (!prUrl.hostname.includes('github.com')) {
+        setError('Please enter a valid GitHub pull request URL');
         setIsValidUrl(false);
         return false;
       }
-      if (!prUrl.pathname.includes("/pull/")) {
-        setError("URL must be a GitHub pull request");
+      if (!prUrl.pathname.includes('/pull/')) {
+        setError('URL must be a GitHub pull request');
         setIsValidUrl(false);
         return false;
       }
 
       if (!prUrlPattern.test(url)) {
-        setError("Invalid GitHub pull request URL format");
+        setError('Invalid GitHub pull request URL format');
         setIsValidUrl(false);
         return false;
       }
@@ -129,7 +129,7 @@ const HackerDashboard = ({
       setIsValidUrl(true);
       return true;
     } catch (err) {
-      setError("Please enter a valid URL");
+      setError('Please enter a valid URL');
       setIsValidUrl(false);
       return false;
     }
@@ -137,7 +137,7 @@ const HackerDashboard = ({
 
   const handleSubmit = async () => {
     if (!githubUser?.username) {
-      setError("GitHub account not connected");
+      setError('GitHub account not connected');
       return;
     }
 
@@ -152,30 +152,30 @@ const HackerDashboard = ({
       const response = await fetch(
         `${import.meta.env.VITE_SERVER_URL}/api/upload-submissions`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "x-api-key": import.meta.env.VITE_API_KEY,
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_KEY
           },
           body: JSON.stringify({
             fid: frameContext.user.fid,
-            pullRequestUrl: prUrl,
-          }),
+            pullRequestUrl: prUrl
+          })
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit PR");
+        throw new Error(data.error || 'Failed to submit PR');
       }
 
-      setPrUrl("");
+      setPrUrl('');
       setIsValidUrl(false);
       setCurrentCyclePR(data.pullRequest);
       setPrHistory((prev) => [data.pullRequest, ...prev]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit PR");
+      setError(err instanceof Error ? err.message : 'Failed to submit PR');
     } finally {
       setIsSubmitting(false);
     }
@@ -254,7 +254,7 @@ const HackerDashboard = ({
             {Object.entries(timeLeft).map(([unit, value]) => (
               <div key={unit} className="bg-black p-3 rounded-lg">
                 <div className="text-2xl font-bold">
-                  {value.toString().padStart(2, "0")}
+                  {value.toString().padStart(2, '0')}
                 </div>
                 <div className="text-xs text-[#2DFF05]/70">{unit}</div>
               </div>
@@ -284,7 +284,7 @@ const HackerDashboard = ({
                 PR Number: #{currentCyclePR.number}
               </p>
               <p className="text-sm text-[#2DFF05]/90">
-                Submitted:{" "}
+                Submitted:{' '}
                 {new Date(currentCyclePR.submittedAt).toLocaleString()}
               </p>
             </div>
@@ -295,7 +295,7 @@ const HackerDashboard = ({
         {(editCurrentCyclePR || !currentCyclePR) && (
           <div className="mb-4 p-6 bg-[#0a0a0a] rounded-lg border border-[#2DFF05]/30">
             <h3 className="text-lg mb-4">
-              {currentCyclePR ? "Update" : "Submit"} Your PR
+              {currentCyclePR ? 'Update' : 'Submit'} Your PR
             </h3>
             <div className="space-y-4">
               <input
@@ -315,11 +315,11 @@ const HackerDashboard = ({
                   disabled={isSubmitting}
                   className={`w-full p-3 rounded-lg border ${
                     isSubmitting
-                      ? "bg-[#2DFF05]/10 border-[#2DFF05]/30 cursor-not-allowed"
-                      : "bg-[#2DFF05]/20 border-[#2DFF05]/50 hover:bg-[#2DFF05]/30 cursor-pointer"
+                      ? 'bg-[#2DFF05]/10 border-[#2DFF05]/30 cursor-not-allowed'
+                      : 'bg-[#2DFF05]/20 border-[#2DFF05]/50 hover:bg-[#2DFF05]/30 cursor-pointer'
                   } transition-all`}
                 >
-                  {isSubmitting ? "Submitting..." : "Submit PR"}
+                  {isSubmitting ? 'Submitting...' : 'Submit PR'}
                 </button>
               )}
             </div>

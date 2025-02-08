@@ -17,7 +17,7 @@ export type IncomingTelegramMessage = {
       id: number;
       first_name: string;
       username: string;
-      type: "private" | "group" | "supergroup" | "channel";
+      type: 'private' | 'group' | 'supergroup' | 'channel';
     };
     date: number;
     text: string;
@@ -29,7 +29,7 @@ export type IncomingTelegramMessage = {
       file_size: number;
     };
     entities?: {
-      type: "bot_command";
+      type: 'bot_command';
       offset: number;
       length: number;
     }[];

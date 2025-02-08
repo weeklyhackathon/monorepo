@@ -1,5 +1,5 @@
-import { FrameContext } from "../components/providers/FarcasterProvider";
-import { GithubUser } from "../components/providers/GithubProvider";
+import type { FrameContext } from '../components/providers/FarcasterProvider';
+import type { GithubUser } from '../components/providers/GithubProvider';
 
 export interface HackerDashboardProps {
   frameContext: FrameContext;

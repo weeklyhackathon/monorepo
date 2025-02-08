@@ -1,6 +1,7 @@
-import Router from "koa-router";
-import {
-  env,
+import type { FrameContext } from '@weeklyhackathon/telegram/types';
+import Router from 'koa-router';
+import { prisma } from '@weeklyhackathon/db';
+import { env,
   log,
   POST,
   GET,
@@ -8,18 +9,15 @@ import {
   validateAuthSession,
   createGithubAuthToken,
   validateGithubAuthToken,
-  checkGithubConnection,
-} from "@weeklyhackathon/utils";
-import { prisma } from "@weeklyhackathon/db";
-import { FrameContext } from "@weeklyhackathon/telegram/types";
+  checkGithubConnection } from '@weeklyhackathon/utils';
 
 export const authRouter = new Router({
-  prefix: "/api/auth",
+  prefix: '/api/auth'
 });
 
-authRouter.get("/health", async (ctx) => {
+authRouter.get('/health', async (ctx) => {
   ctx.body = {
-    status: "ok",
+    status: 'ok'
   };
 });
 
@@ -39,16 +37,20 @@ authRouter.get("/health", async (ctx) => {
  * - Frontend uses this token for subsequent GitHub connection flow
  */
 
-authRouter.post("/register-frame-opened", async (ctx) => {
-  const { frameContext } = ctx.request.body as { frameContext: FrameContext };
-  log.info("📝 Received frame context:", frameContext);
+authRouter.post('/register-frame-opened', async (ctx) => {
+  const {
+    frameContext
+  } = ctx.request.body as { frameContext: FrameContext };
+  log.info('📝 Received frame context:', frameContext);
 
   try {
     // Create or update user in our database
     // If user exists, this just returns the existing user
     // If user is new, creates Farcaster user record
     const user = await prisma.user.upsert({
-      where: { path: `fc_${frameContext.user.fid}` },
+      where: {
+        path: `fc_${frameContext.user.fid}`
+      },
       create: {
         path: `fc_${frameContext.user.fid}`,
         displayName:
@@ -57,36 +59,40 @@ authRouter.post("/register-frame-opened", async (ctx) => {
           create: {
             farcasterId: frameContext.user.fid,
             username:
-              frameContext.user.username ?? frameContext.user.fid.toString(),
-          },
-        },
+              frameContext.user.username ?? frameContext.user.fid.toString()
+          }
+        }
       },
       update: {},
       include: {
-        githubUser: true,
-      },
+        githubUser: true
+      }
     });
-    console.log("IN HEREEEEE ", user);
+    console.log('IN HEREEEEE ', user);
 
     // Create auth session for potential GitHub connection
     // This generates a token that will be used to verify the user's
     // identity when they move from frame to web interface
-    const { authToken } = await createAuthSession(frameContext);
+    const {
+      authToken
+    } = await createAuthSession(frameContext);
 
     log.info(
-      "🔑 Generated auth token and created session for fid: ",
+      '🔑 Generated auth token and created session for fid: ',
       frameContext.user.fid
     );
 
     ctx.body = {
       authToken,
       hasGithub: !!user.githubUser,
-      githubUser: user.githubUser,
+      githubUser: user.githubUser
     };
   } catch (error) {
-    log.error("💥 Error in register-frame-opened:", error);
+    log.error('💥 Error in register-frame-opened:', error);
     ctx.status = 500;
-    ctx.body = { error: "Failed to process frame registration" };
+    ctx.body = {
+      error: 'Failed to process frame registration'
+    };
   }
 });
 
@@ -107,8 +113,10 @@ authRouter.post("/register-frame-opened", async (ctx) => {
  * - Creates a short-lived token specifically for GitHub OAuth
  * - This prevents unauthorized GitHub connection attempts
  */
-authRouter.post("/register-gh-login", async (ctx) => {
-  const { frameContext, authToken } = ctx.request.body as {
+authRouter.post('/register-gh-login', async (ctx) => {
+  const {
+    frameContext, authToken
+  } = ctx.request.body as {
     frameContext: FrameContext;
     authToken: string;
   };
@@ -118,7 +126,9 @@ authRouter.post("/register-gh-login", async (ctx) => {
     const validationResult = await validateAuthSession(authToken);
     if (!validationResult.isValid) {
       ctx.status = 401;
-      ctx.body = { error: validationResult.error };
+      ctx.body = {
+        error: validationResult.error
+      };
       return;
     }
 
@@ -127,19 +137,19 @@ authRouter.post("/register-gh-login", async (ctx) => {
       where: {
         path: `fc_${frameContext.user.fid}`,
         farcasterUser: {
-          farcasterId: frameContext.user.fid,
-        },
+          farcasterId: frameContext.user.fid
+        }
       },
       include: {
-        githubUser: true,
-      },
+        githubUser: true
+      }
     });
 
     const isGithubConnected = !!user?.githubUser;
 
     if (isGithubConnected) {
       ctx.body = {
-        isGithubConnected: true,
+        isGithubConnected: true
       };
       return;
     }
@@ -148,27 +158,33 @@ authRouter.post("/register-gh-login", async (ctx) => {
     const secondAuthToken = await createGithubAuthToken(authToken);
     if (!secondAuthToken) {
       ctx.status = 500;
-      ctx.body = { error: "Failed to create GitHub auth token" };
+      ctx.body = {
+        error: 'Failed to create GitHub auth token'
+      };
       return;
     }
 
-    log.info("🔑 Generated GitHub auth token");
+    log.info('🔑 Generated GitHub auth token');
 
     ctx.body = {
       secondAuthToken,
-      isGithubConnected: false,
+      isGithubConnected: false
     };
   } catch (error) {
-    log.error("💥 Error in register-gh-login:", error);
+    log.error('💥 Error in register-gh-login:', error);
     ctx.status = 500;
-    ctx.body = { error: "Failed to process GitHub login registration" };
+    ctx.body = {
+      error: 'Failed to process GitHub login registration'
+    };
   }
 });
 
-authRouter.post("/get-farcaster-user-information", async (ctx) => {
-  log.info("🔍 Getting Farcaster user information...");
+authRouter.post('/get-farcaster-user-information', async (ctx) => {
+  log.info('🔍 Getting Farcaster user information...');
 
-  const { fid } = ctx.request.body as {
+  const {
+    fid
+  } = ctx.request.body as {
     fid: number;
   };
 
@@ -177,37 +193,39 @@ authRouter.post("/get-farcaster-user-information", async (ctx) => {
     where: {
       path: `fc_${fid}`,
       farcasterUser: {
-        farcasterId: fid,
-      },
+        farcasterId: fid
+      }
     },
     include: {
-      farcasterUser: true,
-    },
+      farcasterUser: true
+    }
   });
 
   if (!user) {
-    log.info("❌ User not found");
+    log.info('❌ User not found');
     ctx.status = 404;
-    ctx.body = { error: "User not found" };
+    ctx.body = {
+      error: 'User not found'
+    };
     return;
   }
 
-  log.info("✅ Found user information");
+  log.info('✅ Found user information');
 
   // Construct frame context from stored user data
   const frameContext = {
     user: {
       fid: user.farcasterUser!.farcasterId,
       username: user.farcasterUser!.username,
-      displayName: user.displayName,
-    },
+      displayName: user.displayName
+    }
   };
 
   ctx.body = {
-    frameContext,
+    frameContext
   };
 
-  log.info("📤 Returning frame context for FID:", fid);
+  log.info('📤 Returning frame context for FID:', fid);
 });
 
 /**
@@ -226,104 +244,112 @@ authRouter.post("/get-farcaster-user-information", async (ctx) => {
  * - Exchanges OAuth code for GitHub access token
  * - Creates permanent connection between Farcaster and GitHub accounts
  */
-authRouter.post("/github/callback", async (ctx) => {
+authRouter.post('/github/callback', async (ctx) => {
   try {
-    console.log("Received GitHub callback");
-    const { code, authToken, secondAuthToken, fid } = ctx.request.body as {
+    console.log('Received GitHub callback');
+    const {
+      code, authToken, secondAuthToken, fid
+    } = ctx.request.body as {
       code: string;
       authToken: string;
       secondAuthToken: string;
       fid: number;
     };
 
-    log.info("Received GitHub callback with auth token:", authToken);
+    log.info('Received GitHub callback with auth token:', authToken);
 
     // Verify this is a valid GitHub connection attempt
     const validation = await validateGithubAuthToken(secondAuthToken);
-    log.info("GitHub auth validation result:", validation);
+    log.info('GitHub auth validation result:', validation);
 
     if (!validation.isValid || !validation.session) {
-      log.error("Invalid GitHub auth session");
+      log.error('Invalid GitHub auth session');
       ctx.status = 401;
-      ctx.body = { error: "Invalid or expired session" };
+      ctx.body = {
+        error: 'Invalid or expired session'
+      };
       return;
     }
 
-    log.info("Validated GitHub auth token, exchanging code for access token");
+    log.info('Validated GitHub auth token, exchanging code for access token');
 
     // Exchange the OAuth code for a GitHub access token
     const tokenResponse = (await POST({
-      url: "https://github.com/login/oauth/access_token",
-      headers: { Accept: "application/json" },
+      url: 'https://github.com/login/oauth/access_token',
+      headers: {
+        Accept: 'application/json'
+      },
       body: {
         client_id: env.GITHUB_CLIENT_ID,
         client_secret: env.GITHUB_CLIENT_SECRET,
-        code,
-      },
+        code
+      }
     })) as { access_token?: string };
 
-    log.info("GitHub token response:", tokenResponse);
+    log.info('GitHub token response:', tokenResponse);
 
     if (!tokenResponse || !tokenResponse.access_token) {
-      log.error("Failed to get GitHub access token");
-      throw new Error("Failed to get GitHub access token");
+      log.error('Failed to get GitHub access token');
+      throw new Error('Failed to get GitHub access token');
     }
 
-    log.info("Got GitHub access token, fetching user profile");
+    log.info('Got GitHub access token, fetching user profile');
 
     // Get the user's GitHub profile information
     const githubUser = (await GET({
-      url: "https://api.github.com/user",
+      url: 'https://api.github.com/user',
       headers: {
-        Authorization: `Bearer ${tokenResponse.access_token}`,
-      },
+        Authorization: `Bearer ${tokenResponse.access_token}`
+      }
     })) as { id?: number; login?: string };
 
-    log.info("GitHub user profile:", githubUser);
+    log.info('GitHub user profile:', githubUser);
 
     if (!githubUser || !githubUser.id || !githubUser.login) {
-      log.error("Failed to fetch GitHub user profile");
-      throw new Error("Failed to fetch GitHub user profile");
+      log.error('Failed to fetch GitHub user profile');
+      throw new Error('Failed to fetch GitHub user profile');
     }
 
-    log.info("Connecting GitHub account to Farcaster user");
+    log.info('Connecting GitHub account to Farcaster user');
 
     // Connect GitHub account to user's Farcaster account
     const updatedUser = await prisma.user.update({
-      where: { path: `fc_${fid}` },
+      where: {
+        path: `fc_${fid}`
+      },
       data: {
         githubUser: {
           upsert: {
             create: {
               githubId: githubUser.id,
               username: githubUser.login,
-              accessToken: tokenResponse.access_token,
+              accessToken: tokenResponse.access_token
             },
             update: {
               username: githubUser.login,
-              accessToken: tokenResponse.access_token,
-            },
-          },
-        },
+              accessToken: tokenResponse.access_token
+            }
+          }
+        }
       },
       include: {
         farcasterUser: true,
-        githubUser: true,
-      },
+        githubUser: true
+      }
     });
 
-    log.info("Successfully connected GitHub account for user:", updatedUser);
+    log.info('Successfully connected GitHub account for user:', updatedUser);
 
     ctx.body = {
       access_token: tokenResponse.access_token,
-      user: updatedUser,
+      user: updatedUser
     };
   } catch (error) {
-    log.error("💥 Error in GitHub callback:", error);
+    log.error('💥 Error in GitHub callback:', error);
     ctx.status = 500;
     ctx.body = {
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 });
@@ -339,16 +365,20 @@ authRouter.post("/github/callback", async (ctx) => {
  * - Helps determine whether to show "Connect GitHub" or "Already Connected"
  * - Also used to verify successful connection after OAuth flow
  */
-authRouter.get("/github/check-connection", async (ctx) => {
+authRouter.get('/github/check-connection', async (ctx) => {
   const fid = ctx.query.fid as string;
   if (!fid) {
     ctx.status = 400;
-    ctx.body = { error: "No FID provided" };
+    ctx.body = {
+      error: 'No FID provided'
+    };
     return;
   }
 
   const isConnected = await checkGithubConnection(parseInt(fid));
-  ctx.body = { isConnected };
+  ctx.body = {
+    isConnected
+  };
 });
 
 /**
@@ -367,36 +397,38 @@ authRouter.get("/github/check-connection", async (ctx) => {
  * - Proxies request to GitHub API to maintain token security
  * - Handles errors from GitHub API gracefully
  */
-authRouter.get("/github/user", async (ctx) => {
+authRouter.get('/github/user', async (ctx) => {
   try {
-    log.info("👤 Fetching GitHub user data");
+    log.info('👤 Fetching GitHub user data');
     const authHeader = ctx.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      log.info("❌ No authorization token provided");
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      log.info('❌ No authorization token provided');
       ctx.status = 401;
-      ctx.body = { error: "No token provided" };
+      ctx.body = {
+        error: 'No token provided'
+      };
       return;
     }
 
-    const token = authHeader.split(" ")[1];
-    log.info("🔑 Using token to fetch user data");
+    const token = authHeader.split(' ')[1];
+    log.info('🔑 Using token to fetch user data');
 
     const userResponse = await GET({
-      url: "https://api.github.com/user",
+      url: 'https://api.github.com/user',
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
 
-    log.info("✅ Successfully retrieved GitHub user data");
+    log.info('✅ Successfully retrieved GitHub user data');
     ctx.body = userResponse;
   } catch (error) {
-    log.error("💥 Error fetching GitHub user:", error);
+    log.error('💥 Error fetching GitHub user:', error);
     ctx.status = 500;
     ctx.body = {
-      error: "Failed to fetch user data",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to fetch user data',
+      details: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 });

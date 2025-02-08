@@ -1,6 +1,6 @@
 import Router from 'koa-router';
 import { prisma } from '@weeklyhackathon/db';
-import { analyseRepoAndSaveResult, extractPullRequestDataFromUrl, savePullRequest } from '@weeklyhackathon/github';
+import { analysePullRequest, savePullRequest } from '@weeklyhackathon/github';
 import { log } from '@weeklyhackathon/utils';
 
 export const uploadSubmissionsRouter = new Router({
@@ -132,9 +132,10 @@ uploadSubmissionsRouter.post('/', async (ctx) => {
 
     const [repoName, repoOwner] = pullRequest.githubRepoNameWithOwner.split('/');
 
-    await analyseRepoAndSaveResult({
-      repoName,
-      repoOwner
+    await analysePullRequest({
+      owner: repoOwner,
+      repo: repoName,
+      prNumber: pullRequest.number
     }).catch((error) => {
       log.error(`💥 Error analysing repo: ${repoOwner}/${repoName}`, error);
     });

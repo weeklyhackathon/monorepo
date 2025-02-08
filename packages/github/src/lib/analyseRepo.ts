@@ -1,9 +1,9 @@
-import fs from 'node:fs/promises';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { log } from '@weeklyhackathon/utils';
 import { askDeepseek } from '@weeklyhackathon/utils/askDeepseek';
 import { tokenize } from '@weeklyhackathon/utils/tokenize';
+import { saveRepo } from './saveRepo';
 
 
 // Maximum tokens for our LLM context (reserve a margin for the prompt)
@@ -230,7 +230,7 @@ ${context}
  * 3. Makes two LLM calls to generate the product analysis and technical architecture analysis.
  * 4. Returns the combined result.
  */
-export async function processRepo({
+export async function analyseRepoAndSaveResult({
   repoOwner,
   repoName
 }: {
@@ -292,6 +292,16 @@ export async function processRepo({
   });
 
   enrichedData.summary = summary;
+
+  await saveRepo({
+    name: repoName,
+    owner: repoOwner,
+    analysis: {
+      productDescription: enrichedData.productAnalysis,
+      technicalArchitecture: enrichedData.technicalAnalysis,
+      summary: enrichedData.summary
+    }
+  });
 
   // log.info('--------------------------------');
 

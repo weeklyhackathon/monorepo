@@ -165,10 +165,14 @@ export async function validateGithubAuthToken(
 }
 
 export async function getFarcasterUser(fid: number) {
+
+  if (!fid) {
+    throw new Error('FID is required');
+  }
+
   try {
     const user = await prisma.user.findFirst({
       where: {
-        path: `fc_${fid}`,
         farcasterUser: {
           farcasterId: fid
         }

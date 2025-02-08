@@ -27,9 +27,11 @@ uploadSubmissionsRouter.get('/:fid', async (ctx) => {
   try {
     log.info('🔍 Looking up pull requests for FID:', fid);
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findFirstOrThrow({
       where: {
-        path: `fc_${fid}`
+        farcasterUser: {
+          farcasterId: fid
+        }
       },
       include: {
         pullRequests: {
@@ -42,14 +44,6 @@ uploadSubmissionsRouter.get('/:fid', async (ctx) => {
         }
       }
     });
-
-    if (!user) {
-      ctx.status = 404;
-      ctx.body = {
-        error: 'User not found'
-      };
-      return;
-    }
 
     ctx.body = {
       success: true,
@@ -107,9 +101,8 @@ uploadSubmissionsRouter.post('/', async (ctx) => {
     // Check if user exists and has GitHub connected
     const user = await prisma.user.findFirst({
       where: {
-        path: `fc_${fid}`,
-        githubUser: {
-          isNot: null
+        farcasterUser: {
+          farcasterId: fid
         }
       },
       include: {
@@ -136,6 +129,7 @@ uploadSubmissionsRouter.post('/', async (ctx) => {
     });
 
     log.info('✅ Successfully saved pull request:', pullRequest);
+
 
     ctx.body = {
       success: true,

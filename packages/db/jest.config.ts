@@ -4,9 +4,11 @@ export default {
   testEnvironment: 'node',
   transform: {
     '^.+\.(t|j)sx?$': ['@swc/jest',
-    {
-      jsc: { baseUrl: '.' }
-    }],
+      {
+        jsc: {
+          baseUrl: '.'
+        }
+      }]
   },
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleFileExtensions: ['ts', 'js', 'html'],

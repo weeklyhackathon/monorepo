@@ -1,5 +1,7 @@
-import { GitHubProvider } from "./GithubProvider";
+import { GitHubProvider } from './GithubProvider';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children
+}: { children: React.ReactNode }) {
   return <GitHubProvider>{children}</GitHubProvider>;
 }

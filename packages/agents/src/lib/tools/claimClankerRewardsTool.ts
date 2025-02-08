@@ -1,43 +1,82 @@
-import { Abi, createPublicClient, createWalletClient, decodeEventLog, http, parseEther } from 'viem';
-import { base, baseSepolia } from 'viem/chains';
+import type { Agent, ClaimedRewardsLog } from '../types';
+import type { Abi } from 'viem';
+import { CdpTool } from '@coinbase/cdp-langchain';
+import { createPublicClient, createWalletClient, decodeEventLog, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { CdpTool } from "@coinbase/cdp-langchain";
-import { Agent, ClaimedRewardsLog } from "../types";
-import { hackathonAddress, hackathonSymbol } from "../constants";
+import { base, baseSepolia } from 'viem/chains';
+import { z } from 'zod';
 import { readFromNodes } from '@weeklyhackathon/agents/nillionVault';
-import { log } from "@weeklyhackathon/utils";
-import { z } from "zod";
+import { log } from '@weeklyhackathon/utils';
+import { hackathonAddress, hackathonSymbol } from '../constants';
 
 // Define the prompt for the winners payout tool
-const CLAIM_REWARDS_PROMPT = "Call the 'claimRewards' function to claim the trading fees of the hackathon token from the clanker platform to fund the hackathon prizes. Use it before prizes distribution.";
+const CLAIM_REWARDS_PROMPT = 'Call the \'claimRewards\' function to claim the trading fees of the hackathon token from the clanker platform to fund the hackathon prizes. Use it before prizes distribution.';
 
 const ClaimRewardsInput = z.object({});
 type ClaimRewardsSchema = z.infer<typeof ClaimRewardsInput>;
 
-const clankerRewardsAddress = process.env.NETWORK_ID === "base-mainnet" ? "0x901776E42A8286525849c67825c758ddbB1d94F7" : "0x732560fa1d1A76350b1A500155BA978031B53833";
+const clankerRewardsAddress = process.env.NETWORK_ID === 'base-mainnet' ? '0x901776E42A8286525849c67825c758ddbB1d94F7' : '0x732560fa1d1A76350b1A500155BA978031B53833';
 const claimRewardsAbi: Abi = [
   {
-    "inputs": [{"name": "token","type": "address"}],
-    "name": "claimRewards",
-    "type": "function",
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    'inputs': [{
+      'name': 'token',
+      'type': 'address'
+    }],
+    'name': 'claimRewards',
+    'type': 'function',
+    'outputs': [],
+    'stateMutability': 'nonpayable'
   }
 ] as const;
 const claimedRewardsEventAbi: Abi = [
   {
-    "anonymous":false,
-    "inputs": [
-      { "indexed":true, "internalType":"address", "name":"claimer", "type":"address" },
-      { "indexed":true, "internalType":"address", "name":"token0", "type":"address" },
-      { "indexed":true, "internalType":"address", "name":"token1", "type":"address" },
-      { "indexed":false, "internalType":"uint256", "name":"amount0", "type":"uint256" },
-      { "indexed":false, "internalType":"uint256", "name":"amount1", "type":"uint256" },
-      { "indexed":false, "internalType":"uint256", "name":"totalAmount1",  "type":"uint256" },
-      { "indexed":false, "internalType":"uint256", "name":"totalAmount0", "type":"uint256" }
+    'anonymous': false,
+    'inputs': [
+      {
+        'indexed': true,
+        'internalType': 'address',
+        'name': 'claimer',
+        'type': 'address'
+      },
+      {
+        'indexed': true,
+        'internalType': 'address',
+        'name': 'token0',
+        'type': 'address'
+      },
+      {
+        'indexed': true,
+        'internalType': 'address',
+        'name': 'token1',
+        'type': 'address'
+      },
+      {
+        'indexed': false,
+        'internalType': 'uint256',
+        'name': 'amount0',
+        'type': 'uint256'
+      },
+      {
+        'indexed': false,
+        'internalType': 'uint256',
+        'name': 'amount1',
+        'type': 'uint256'
+      },
+      {
+        'indexed': false,
+        'internalType': 'uint256',
+        'name': 'totalAmount1',
+        'type': 'uint256'
+      },
+      {
+        'indexed': false,
+        'internalType': 'uint256',
+        'name': 'totalAmount0',
+        'type': 'uint256'
+      }
     ],
-    "name":"ClaimedRewards",
-    "type":"event"
+    'name': 'ClaimedRewards',
+    'type': 'event'
   }
 ] as const;
 
@@ -64,22 +103,28 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
   });
 
   try {
-    const { request } = await publicClient.simulateContract({
+    const {
+      request
+    } = await publicClient.simulateContract({
       address: clankerRewardsAddress,
       abi: claimRewardsAbi,
       functionName: 'claimRewards',
       args: [hackathonAddress],
       account
-    });     
-    
+    });
+
     const txHash = await walletClient.writeContract(request);
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash
+    });
 
     let claimArgs: ClaimedRewardsLog | undefined;
     try {
       const claimedEvent = receipt.logs
-        .map(log => decodeEventLog({ 
-          abi: claimedRewardsEventAbi, data: log.data, topics: log.topics 
+        .map(log => decodeEventLog({
+          abi: claimedRewardsEventAbi,
+          data: log.data,
+          topics: log.topics
         }))
         .find(e => e.eventName === 'ClaimedRewards');
       claimArgs = claimedEvent?.args as unknown as ClaimedRewardsLog;
@@ -90,12 +135,12 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
     const amountEth = claimArgs?.amount1 || 0;
 
     const summary =
-      "Claim Rewards Summary:\n" +
-      "============================\n" + (amountEth ?
-      `Total Weth Claimed: ${amountEth}\n`:"") + (amountHack ?
-      `Total Hackathon Claimed: ${amountHack}\n`:"") +
-      "============================\n" +
-      `\nSuccess: Clanker Rewards successfuly claimed.` +
+      'Claim Rewards Summary:\n' +
+      '============================\n' + (amountEth ?
+        `Total Weth Claimed: ${amountEth}\n`:'') + (amountHack ?
+        `Total Hackathon Claimed: ${amountHack}\n`:'') +
+      '============================\n' +
+      '\nSuccess: Clanker Rewards successfuly claimed.' +
       `\nTransaction Hash: ${txHash}` +
       `\nTransaction Link: https://${
         process.env.NETWORK_ID === 'base-mainnet' ? '' : 'sepolia.'
@@ -105,14 +150,14 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
   } catch (error) {
     log.error(error);
   }
-  return `Error: Could not claim clanker rewards.`
+  return 'Error: Could not claim clanker rewards.';
 }
 
 export function getClaimClankerRewardsTool(agentkit: Agent) {
   // Create the CdpTool instance
   return new CdpTool(
     {
-      name: "claim_clanker_rewards",
+      name: 'claim_clanker_rewards',
       description: CLAIM_REWARDS_PROMPT,
       argsSchema: ClaimRewardsInput,
       func: claimClankerRewards

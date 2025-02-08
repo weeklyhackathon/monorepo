@@ -1,7 +1,7 @@
 import type { GithubPullRequest, GithubRepo } from '@weeklyhackathon/db';
+import { getPullRequestDiff } from './getPullRequestDiff';
 import { getPullRequestsFromLastWeek } from './getPullRequestsFromLastWeek';
 import { getRepo } from './getRepo';
-import { getPullRequestDiff } from './getPullRequestDiff';
 
 export type EnrichedPullRequest = {
   pullRequest: GithubPullRequest;
@@ -24,7 +24,7 @@ export async function getEnrichedPullRequests(): Promise<EnrichedPullRequest[]> 
   pullRequests.forEach(pr => repoSet.add(pr.githubRepoNameWithOwner));
 
   // fetching repos
-  const repoPromises = 
+  const repoPromises =
     Array.from(repoSet).map(async (nameWithOwner: string) => await getRepo(nameWithOwner));
   const repos = await Promise.all(repoPromises);
 
@@ -39,11 +39,17 @@ export async function getEnrichedPullRequests(): Promise<EnrichedPullRequest[]> 
       // matching repos and PRs again
       if (pullRequest.githubRepoNameWithOwner === repo.nameWithOwner) {
         // fetch pull request diff
-        const diff = await getPullRequestDiff({ 
-          owner: repo.owner, repo: repo.name, prNumber: pullRequest.number 
+        const diff = await getPullRequestDiff({
+          owner: repo.owner,
+          repo: repo.name,
+          prNumber: pullRequest.number
         });
         // return the enriched pr
-        enrichedPrs.push({ repo, pullRequest, diff });      
+        enrichedPrs.push({
+          repo,
+          pullRequest,
+          diff
+        });
       }
     });
   }

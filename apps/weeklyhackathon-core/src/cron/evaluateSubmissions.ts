@@ -1,6 +1,6 @@
-import { env, log } from '@weeklyhackathon/utils';
-import { getEnrichedPullRequests } from '@weeklyhackathon/github';
 import { prisma } from '@weeklyhackathon/db';
+import { getEnrichedPullRequests } from '@weeklyhackathon/github';
+import { env, log } from '@weeklyhackathon/utils';
 
 export async function evaluateSubmissions(): Promise<void> {
   log.info('Feching submissions');
@@ -11,8 +11,8 @@ export async function evaluateSubmissions(): Promise<void> {
     log.info('No hacker submissions found');
     return;
   }
-  
-  log.info('Evaluating submissions'); 
+
+  log.info('Evaluating submissions');
 
   for (const submission of submissions) {
     const response = await fetch(env.DOMAIN+'/api/process-submission/test', {
@@ -28,18 +28,20 @@ export async function evaluateSubmissions(): Promise<void> {
     if (!response.ok) {
       log.error(`${response.status} - ${response.statusText}`);
     } else {
-      log.info('Hacker submission processed');  
+      log.info('Hacker submission processed');
 
-      const { score } = await response?.json();
+      const {
+        score
+      } = await response?.json();
       if (!score) {
         log.info('No score found');
         return;
       }
-      
-      log.info('Current Hacker score');  
+
+      log.info('Current Hacker score');
       log.log(score);
 
-      try {  
+      try {
         await prisma.githubPullRequest.update({
           where: {
             id: submission.pullRequest.id
@@ -48,8 +50,8 @@ export async function evaluateSubmissions(): Promise<void> {
             score: score
           }
         });
-        
-        log.info('Hacker score stored in database'); 
+
+        log.info('Hacker score stored in database');
       } catch (error) {
         log.info('Error updating score in the database');
         log.error(error);

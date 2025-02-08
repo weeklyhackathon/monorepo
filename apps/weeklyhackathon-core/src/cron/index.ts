@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { log } from '@weeklyhackathon/utils';
-import { evaluateSubmissions } from './evaluateSubmissions';
 import { distributePrizes } from './distributePrizes';
+import { evaluateSubmissions } from './evaluateSubmissions';
 
 
 export function startCronJobs() {

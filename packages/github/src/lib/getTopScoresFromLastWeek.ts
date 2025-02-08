@@ -9,17 +9,17 @@ import { prisma } from '@weeklyhackathon/db';
 export async function getTopScoresFromLastWeek() {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  /// TODO: must use a fixed timestamp to set the start  
+  /// TODO: must use a fixed timestamp to set the start
 
   return await prisma.githubPullRequest.findMany({
     where: {
       submittedAt: {
         gte: oneWeekAgo
       }
-    },    
-    orderBy: {
-      score: 'desc',
     },
-    take: 8,
+    orderBy: {
+      score: 'desc'
+    },
+    take: 8
   });
 }

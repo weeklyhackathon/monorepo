@@ -1,12 +1,12 @@
-import { AgentKitOptions } from "@coinbase/agentkit";
-import { Address } from "viem"; 
-import { EnrichedPullRequest } from '@weeklyhackathon/github'; 
+import type { EnrichedPullRequest } from '@weeklyhackathon/github';
+import type { Address } from 'viem';
+import { AgentKitOptions } from '@coinbase/agentkit';
 
 export enum AgentType {
-  Judge = "judge",
-  Hacker = "hacker",
-  Payment = "payment",
-  Messenger = "messenger"
+  Judge = 'judge',
+  Hacker = 'hacker',
+  Payment = 'payment',
+  Messenger = 'messenger'
 }
 
 export type Agent = any;
@@ -19,10 +19,10 @@ export type Winner = {
   amount?: number;
 }
 
-export type SendPrizeParams = { 
-  amountEth: string, 
-  amountHack: string, 
-  winners: Winner[] 
+export type SendPrizeParams = {
+  amountEth: string,
+  amountHack: string,
+  winners: Winner[]
 }
 
 export type ProcessSubmissionParams = {

@@ -14,9 +14,9 @@ export function startCronJobs() {
   // Analyse PRs every hour
   cron.schedule('0 * * * *', refreshMissingPRAnalyses);
 }
-/*
+
 export async function startDemo() {
   await evaluateSubmissions();
-  await distributePrizes();
+  //await distributePrizes();
 }
-*/
+

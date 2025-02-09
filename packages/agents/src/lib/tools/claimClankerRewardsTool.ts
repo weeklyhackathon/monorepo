@@ -15,7 +15,7 @@ const CLAIM_REWARDS_PROMPT = 'Call the "claimRewards" function to claim the trad
 const ClaimRewardsInput = z.object({});
 type ClaimRewardsSchema = z.infer<typeof ClaimRewardsInput>;
 
-const clankerRewardsAddress = process.env.NETWORK_ID === 'base-mainnet' ? '0x901776E42A8286525849c67825c758ddbB1d94F7' : '0x732560fa1d1A76350b1A500155BA978031B53833';
+const clankerRewardsAddress = process.env.NETWORK_ID === 'base-mainnet' ? '0x732560fa1d1A76350b1A500155BA978031B53833' : '0x901776E42A8286525849c67825c758ddbB1d94F7';
 const claimRewardsAbi: Abi = [
   {
     'inputs': [{

@@ -18,41 +18,24 @@ export type EnrichedPullRequest = {
 export async function getEnrichedPullRequests(): Promise<EnrichedPullRequest[]> {
   // Get all pull requests created in the last week
   const pullRequests = await getPullRequestsFromLastWeek();
-  log.log(pullRequests);
-
-  // Create a set to store unique repositories
-  const repoSet = new Set<string>();
-  pullRequests.forEach(pr => repoSet.add(pr.githubRepoNameWithOwner));
-
-  // fetching repos
-  const repoPromises =
-    Array.from(repoSet).map(async (nameWithOwner: string) => await getRepo(nameWithOwner));
-  const repos = await Promise.all(repoPromises);
-
-  // remove not valid or missing repos
-  const validRepos = repos.filter((repo): repo is GithubRepo => repo !== null);
 
   const enrichedPrs: EnrichedPullRequest[] = [];
   // iterate pull requests
   for (const pullRequest of pullRequests) {
-    // iterate repos
-    validRepos.map(async (repo: GithubRepo) => {
-        log.log(pullRequests);
-      // matching repos and PRs again
-      if (pullRequest.githubRepoNameWithOwner === repo.nameWithOwner) {
-        // fetch pull request diff
-        const diff = await getPullRequestDiff({
-          owner: repo.owner,
-          repo: repo.name,
-          prNumber: pullRequest.number
-        });
-        // return the enriched pr
-        enrichedPrs.push({
-          repo,
-          pullRequest,
-          diff
-        });
-      }
+    // fetch repo
+    const repo = await getRepo(pullRequest?.githubRepoNameWithOwner) || undefined; 
+    // fetch pull request diff
+    const diff = await getPullRequestDiff({
+      owner: repo?.owner ?? "",
+      repo: repo?.name ?? "",
+      prNumber: pullRequest?.number ?? ""
+    });
+
+    // return the enriched pr
+    enrichedPrs.push({
+      repo,
+      pullRequest,
+      diff
     });
   }
 

@@ -22,4 +22,4 @@ async function refreshAnalyses() {
   }
 }
 
-refreshAnalyses();
+// refreshAnalyses();

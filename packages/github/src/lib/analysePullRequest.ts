@@ -8,12 +8,14 @@ export async function analysePullRequest({
   owner,
   repo,
   prNumber,
-  forceRefresh = false
+  forceRefresh = false,
+  forceRefreshRepo = false
 }: {
   owner: string;
   repo: string;
   prNumber: number;
   forceRefresh?: boolean;
+  forceRefreshRepo?: boolean;
 }): Promise<Pick<GithubPullRequest, 'productAnalysis' | 'technicalArchitecture'>> {
 
   if (!forceRefresh) {
@@ -43,7 +45,7 @@ export async function analysePullRequest({
   const repoSummary = await analyseRepoAndSaveResult({
     repoOwner: owner,
     repoName: repo,
-    forceRefresh
+    forceRefresh: forceRefreshRepo
   });
 
   const prompt = `

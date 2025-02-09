@@ -10,7 +10,7 @@ import { log } from '@weeklyhackathon/utils';
 import { hackathonAddress, hackathonSymbol } from '../constants';
 
 // Define the prompt for the winners payout tool
-const CLAIM_REWARDS_PROMPT = 'Call the \'claimRewards\' function to claim the trading fees of the hackathon token from the clanker platform to fund the hackathon prizes. Use it before prizes distribution.';
+const CLAIM_REWARDS_PROMPT = 'Call the "claimRewards" function to claim the trading fees of the hackathon token from the clanker platform to fund the hackathon prizes. Use it before prizes distribution.';
 
 const ClaimRewardsInput = z.object({});
 type ClaimRewardsSchema = z.infer<typeof ClaimRewardsInput>;

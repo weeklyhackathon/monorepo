@@ -12,12 +12,12 @@ import { log } from '@weeklyhackathon/utils';
 import { hackathonAddress, hackathonSymbol, wethAddress, winnerShares } from '../constants';
 
 // Define the prompt for the winners payout tool
-const WINNERS_PAYOUT_PROMPT = 'Transfer any \'amount\' of the \'token\' to a list of well known recipients extracted from the database. The input must include the \'amount\' and the \'token\' parameters.';
+const WINNERS_PAYOUT_PROMPT = 'Transfer any "amount" of the "token" to a list of well known recipients extracted from the database. The input must include the "amount" and the "token" parameters.';
 
 // Define the input schema using Zod
 const WinnersPayoutInput = z.object({
   //token: z.string().describe("The ticker or symbol of the token to transfer. Must be one of 'wei', 'gwei', 'hackathon', 'usdc', 'weth', or 'eth'"),
-  token: z.string().describe('The ticker or symbol of the token to transfer. Must be one of \'hackathon\' or \'weth\'.'),
+  token: z.string().describe('The ticker or symbol of the token to transfer. Must be one of "hackathon" or "weth".'),
   amount: z.number().describe('The total amount of the token to be distributed among winners.')
 });
 

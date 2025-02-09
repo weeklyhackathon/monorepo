@@ -44,7 +44,7 @@ export async function evaluateSubmissions(): Promise<void> {
       try {
         await prisma.githubPullRequest.update({
           where: {
-            id: submission.pullRequest.id
+            id: submission?.pullRequest?.id
           },
           data: {
             score: score

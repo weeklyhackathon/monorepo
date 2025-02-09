@@ -3,7 +3,7 @@ import { CdpTool } from '@coinbase/cdp-langchain';
 import { z } from 'zod';
 import { log } from '@weeklyhackathon/utils';
 
-const SEND_CAST_PROMPT = 'Send or publish a cast (post) in the farcaster social network. Include cast content (text) in the \'content\' field';
+const SEND_CAST_PROMPT = 'Send or publish a cast (post) in the farcaster social network. Include cast content (text) in the "content" field';
 
 const SendCastInput = z
   .object({

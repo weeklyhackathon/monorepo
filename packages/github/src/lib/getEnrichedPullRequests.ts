@@ -4,9 +4,9 @@ import { getPullRequestsFromLastWeek } from './getPullRequestsFromLastWeek';
 import { getRepo } from './getRepo';
 
 export type EnrichedPullRequest = {
-  pullRequest: GithubPullRequest;
-  repo: GithubRepo;
-  diff: string;
+  pullRequest?: GithubPullRequest;
+  repo?: GithubRepo;
+  diff?: string;
 }
 
 /**

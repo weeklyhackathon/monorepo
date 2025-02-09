@@ -1,11 +1,11 @@
 import { prisma } from '@weeklyhackathon/db';
-import { getEnrichedPullRequests } from '@weeklyhackathon/github';
+import { getFakeEnrichedPullRequests } from '@weeklyhackathon/agents/tools/utils';
 import { env, log } from '@weeklyhackathon/utils';
 
 export async function evaluateSubmissions(): Promise<void> {
   log.info('Feching submissions');
 
-  const submissions = await getEnrichedPullRequests();
+  const submissions = await getFakeEnrichedPullRequests();
 
   if (!submissions || submissions.length === 0) {
     log.info('No hacker submissions found');
@@ -40,7 +40,7 @@ export async function evaluateSubmissions(): Promise<void> {
 
       log.info('Current Hacker score');
       log.log(score);
-
+/*
       try {
         await prisma.githubPullRequest.update({
           where: {
@@ -56,6 +56,7 @@ export async function evaluateSubmissions(): Promise<void> {
         log.info('Error updating score in the database');
         log.error(error);
       }
+*/
     }
   }
 

@@ -67,6 +67,14 @@ The platform is structured as a **multi-agent system**:
 
 ---
 
+## Sponsor Prizes CheatSheet
+
+- **Base**: Yes, Weekly Hackathon aims to be based, certainly it also could be called Farcaster Based Hackathon. Check [$hackathon contract](https://basescan.org/token/0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb#code#F1#L1).
+- **Coinbase Agentkit**: All our agents got a wallet. Check our implementation with the CDP Agentkit on the [agents package.](https://github.com/weeklyhackathon/monorepo/tree/main/packages/agents)
+- **Nethermind**: It is not the chaos chain but it could be enough wild to arrive consensus there. Multiagent, reinforcement learning for humans with LLM scoring and judging, hacker, social and onchain agents, fully automated protocol, prompt chaining, workflows.. all this repo is an agentic experiment.
+- **Nillion**: Secrets stored, distributed and locked. Check our implementation of nillion secret vault to store private keys on this [PR.](https://github.com/weeklyhackathon/monorepo/pull/5)
+
+
 ## 📌 Getting Started  
 
 1️⃣ **Clone the repo**  

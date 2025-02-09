@@ -6,7 +6,8 @@ export enum AgentType {
   Judge = 'judge',
   Hacker = 'hacker',
   Payment = 'payment',
-  Messenger = 'messenger'
+  Messenger = 'messenger',
+  Analyzer = 'analyzer'
 }
 
 export type Agent = any;

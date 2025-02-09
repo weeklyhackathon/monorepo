@@ -1,3 +1,5 @@
+import { AgentType, initializeAgent, getAgentResponse } from '@weeklyhackathon/agents';
+import { log } from '@weeklyhackathon/utils';
 
 export type StructuredOutputSchema<T extends string = string> = {
   properties: Record<T, {type: 'array', items: {type: 'string'}} | {type: 'string'}>
@@ -23,7 +25,28 @@ export async function askDeepseek(
     message,
     schema
   }: DeepseekRequest
-): Promise<any> {
+): Promise<string> {
+  const { agent, config } = await initializeAgent(AgentType.Analyzer);
+
+  if (!agent || config?.agentType !== AgentType.Analyzer) {
+    log.error('Could not initialize the Analyzer agent');
+    return "";
+  }
+
+  log.info('Analyzer agent is ready');
+
+  if (schema) {
+    message += `\n\nYou have been provided a schema within which you should populate the response. The response must be in the following JSON format: ${JSON.stringify(schema, null, 2)}`;
+  }
+  const messages = await getAgentResponse(agent, config, systemPrompt + message);
+  
+  if (!messages || messages.length === 0) {
+    log.error('Missing analyzer agent response');
+    return "";
+  }
+
+  return messages[0];
+/*
   const apiUrl = 'https://api.deepseek.com/chat/completions';
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -75,11 +98,12 @@ export async function askDeepseek(
 
 
   if (schema) {
-    return JSON.parse(data.choices[0].message.content);
+    return JSON.parse(messages.choices[0].message.content);
   }
 
   // Assumes the response is in the format with a choices array.
   return data.choices[0].message.content;
+    */
 }
 
 

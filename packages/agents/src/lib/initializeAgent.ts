@@ -10,7 +10,9 @@ import { validateAgentEnv } from '@weeklyhackathon/utils';
 import { hackerAgentPrompt,
   judgeAgentPrompt,
   paymentAgentPrompt,
-  messengerAgentPrompt } from './constants';
+  messengerAgentPrompt,
+  analyzerAgentPrompt 
+} from './constants';
 import { getSendCastTool, getWinnersPayoutTool, getClaimClankerRewardsTool } from './tools';
 import { AgentType, Agent, AgentConfig } from './types';
 
@@ -83,6 +85,7 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
       tools,
       checkpointSaver: memory,
       messageModifier:
+      agentType === AgentType.Analyzer ? analyzerAgentPrompt :
        agentType === AgentType.Messenger ? messengerAgentPrompt :
          agentType === AgentType.Payment ? paymentAgentPrompt :
            agentType === AgentType.Judge ? judgeAgentPrompt :

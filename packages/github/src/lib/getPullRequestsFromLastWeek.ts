@@ -8,7 +8,7 @@ import { prisma } from '@weeklyhackathon/db';
  */
 export async function getPullRequestsFromLastWeek(): Promise<GithubPullRequest[]> {
   const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  oneWeekAgo.setTime(oneWeekAgo.getTime() -  (7 * 60 * 60 * 24 * 1000));
   /// TODO: must use a fixed timestamp to set the start
 
   return prisma.githubPullRequest.findMany({

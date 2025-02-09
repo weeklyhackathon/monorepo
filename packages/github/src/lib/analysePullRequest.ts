@@ -48,7 +48,7 @@ export async function analysePullRequest({
 
   const prompt = `
   Here is the summary of the repository:
-  ${repoSummary}
+  ${repoSummary.summary}
 
   Here is what the product description of the repository is:
   ${repoSummary.productDescription}

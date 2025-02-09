@@ -12,7 +12,7 @@ A decentralized and autonomous platform for running **weekly hackathons**, where
 - Participants **submit PRs** to the designated repository before the deadline.  
 
 ### 2️⃣ **Pull Request Submission & Tracking**  
-- The system **whitelists developers** based on predefined rules.  
+- The system **allowlists developers** based on predefined rules.  
 - Developers submit **pull requests (PRs)** to the GitHub repo.  
 - PRs are stored in the **database**, tagged for evaluation.  
 
@@ -41,6 +41,7 @@ The platform is structured as a **multi-agent system**:
 - **Hacker Agent**: Manages PR submissions.  
 - **Judge Agent**: Scores and ranks PRs.  
 - **Payment Agent**: Handles winner payout.  
+- **Messenger Agent**: Handles farcaster social network account.
 
 ---
 
@@ -57,9 +58,12 @@ The platform is structured as a **multi-agent system**:
 ## 🛠️ Tech Stack  
 
 - **Backend**: Node.js, TypeScript  
-- **Database**: PostgreSQL / Firebase  
+- **Database**: PostgreSQL  
+- **Multi Agents System**: Analyzer, Hacker, Judge and Payment. 
 - **AI Judging**: LLM-based scoring models  
-- **Blockchain**: Crypto payments (Ethereum, Solana, etc.)  
+- **Blockchain**: L2 Based Crypto payments in Ethereum 
+- **LLMs**: Anthropic, OpenAI, DeepSeek, Venice
+- **Social**: Farcaster
 
 ---
 

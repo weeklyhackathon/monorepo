@@ -11,7 +11,7 @@ import { userPathFromFid,
   createGithubAuthToken,
   validateGithubAuthToken,
   checkGithubConnection } from '@weeklyhackathon/utils';
-import { getUserByFid } from '@weeklyhackathon/utils/getUserByFid';
+import { getUserByFid, getUserByFidOrThrow } from '@weeklyhackathon/utils/getUserByFid';
 
 
 export const authRouter = new Router({
@@ -60,7 +60,7 @@ authRouter.post('/register-frame-opened', async (ctx) => {
           frameContext.user.username ?? frameContext.user.fid.toString(),
         farcasterUser: {
           create: {
-            farcasterId: frameContext.user.fid,
+            farcasterId: Number(frameContext.user.fid),
             username:
               frameContext.user.username ?? frameContext.user.fid.toString()
           }
@@ -144,7 +144,7 @@ authRouter.post('/register-gh-login', async (ctx) => {
     const user = await prisma.user.findFirst({
       where: {
         farcasterUser: {
-          farcasterId: frameContext.user.fid
+          farcasterId: Number(frameContext.user.fid)
         }
       },
       include: {
@@ -199,7 +199,7 @@ authRouter.post('/get-farcaster-user-information', async (ctx) => {
   const user = await prisma.user.findFirst({
     where: {
       farcasterUser: {
-        farcasterId: fid
+        farcasterId: Number(fid)
       }
     },
     include: {
@@ -318,13 +318,7 @@ authRouter.post('/github/callback', async (ctx) => {
 
     log.info('Connecting GitHub account to Farcaster user');
 
-    const user = await prisma.user.findFirstOrThrow({
-      where: {
-        farcasterUser: {
-          farcasterId: fid
-        }
-      }
-    });
+    const user = await getUserByFidOrThrow(fid);
 
     // Connect GitHub account to user's Farcaster account
     const updatedUser = await prisma.user.update({

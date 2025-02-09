@@ -58,3 +58,5 @@ test-output
 .next
 out
 
+# Output files
+out.txt

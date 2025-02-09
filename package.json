@@ -8,6 +8,9 @@
   "type": "module",
   "scripts": {
     "config": "npm ci && cp .env.example .env && npx dotenv -e .env -- npm run prisma:migrate",
+    "clean:outfiles": "rm -rf ./out.txt",
+    "query": "npm run clean:outfiles && npx dotenv -e .env -- npx tsx -- ./apps/weeklyhackathon-core/src/scripts/query.ts >> out.txt",
+    "query:prod": "npm run clean:outfiles && npx dotenv -e .env.prod -- npx tsx -- ./apps/weeklyhackathon-core/src/scripts/query.ts >> out.txt",
     "postinstall": "npm run prisma:generate",
     "typecheck": "npm run typecheck -w=apps/",
     "build": "npm run prisma:generate && npm run build -w=apps/$APP_NAME",

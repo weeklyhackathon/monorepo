@@ -18,6 +18,7 @@ export type EnrichedPullRequest = {
 export async function getEnrichedPullRequests(): Promise<EnrichedPullRequest[]> {
   // Get all pull requests created in the last week
   const pullRequests = await getPullRequestsFromLastWeek();
+  log.log(pullRequests);
 
   // Create a set to store unique repositories
   const repoSet = new Set<string>();
@@ -36,6 +37,7 @@ export async function getEnrichedPullRequests(): Promise<EnrichedPullRequest[]> 
   for (const pullRequest of pullRequests) {
     // iterate repos
     validRepos.map(async (repo: GithubRepo) => {
+        log.log(pullRequests);
       // matching repos and PRs again
       if (pullRequest.githubRepoNameWithOwner === repo.nameWithOwner) {
         // fetch pull request diff

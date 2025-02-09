@@ -11,7 +11,7 @@ export async function getPullRequestsFromLastWeek(): Promise<GithubPullRequest[]
   oneWeekAgo.setTime(oneWeekAgo.getTime() -  (7 * 60 * 60 * 24 * 1000));
   /// TODO: must use a fixed timestamp to set the start
 
-  return prisma.githubPullRequest.findMany({
+  return await prisma.githubPullRequest.findMany({
     where: {
       submittedAt: {
         gte: oneWeekAgo

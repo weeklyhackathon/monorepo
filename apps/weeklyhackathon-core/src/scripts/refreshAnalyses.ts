@@ -1,5 +1,5 @@
 import { prisma } from '@weeklyhackathon/db';
-import { analysePullRequest, analyseRepoAndSaveResult } from '@weeklyhackathon/github';
+import { analysePullRequest } from '@weeklyhackathon/github';
 import { log } from '@weeklyhackathon/utils/log';
 
 async function refreshAnalyses() {

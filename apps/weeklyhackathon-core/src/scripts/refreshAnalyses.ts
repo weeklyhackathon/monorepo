@@ -1,5 +1,5 @@
 import { prisma } from '@weeklyhackathon/db';
-import { analyseRepoAndSaveResult } from '@weeklyhackathon/github';
+import { analysePullRequest } from '@weeklyhackathon/github';
 import { log } from '@weeklyhackathon/utils/log';
 
 async function refreshAnalyses() {
@@ -13,12 +13,13 @@ async function refreshAnalyses() {
 
   for (const pr of prs) {
     log.info(`Refreshing analysis for ${pr.repo.owner}/${pr.repo.name}/${pr.number}`);
-    await analyseRepoAndSaveResult({
-      repoOwner: pr.repo.owner,
-      repoName: pr.repo.name,
+    await analysePullRequest({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      prNumber: pr.number,
       forceRefresh: true
     });
   }
 }
 
-refreshAnalyses();
+// refreshAnalyses();

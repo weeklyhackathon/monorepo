@@ -30,7 +30,7 @@ uploadSubmissionsRouter.get('/:fid', async (ctx) => {
     const user = await prisma.user.findFirstOrThrow({
       where: {
         farcasterUser: {
-          farcasterId: fid
+          farcasterId: Number(fid)
         }
       },
       include: {
@@ -102,7 +102,7 @@ uploadSubmissionsRouter.post('/', async (ctx) => {
     const user = await prisma.user.findFirst({
       where: {
         farcasterUser: {
-          farcasterId: fid
+          farcasterId: Number(fid)
         }
       },
       include: {

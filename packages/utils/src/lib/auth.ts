@@ -174,7 +174,7 @@ export async function getFarcasterUser(fid: number) {
     const user = await prisma.user.findFirst({
       where: {
         farcasterUser: {
-          farcasterId: fid
+          farcasterId: Number(fid)
         }
       },
       include: {

@@ -16,7 +16,7 @@ export function startCronJobs() {
 }
 
 export async function startDemo() {
-  await evaluateSubmissions();
+  //await evaluateSubmissions();
   //await distributePrizes();
 }
 

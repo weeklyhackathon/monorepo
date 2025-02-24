@@ -130,7 +130,7 @@ uploadSubmissionsRouter.post('/', async (ctx) => {
 
     log.info('✅ Successfully saved pull request:', pullRequest);
 
-    const [repoName, repoOwner] = pullRequest.githubRepoNameWithOwner.split('/');
+    const [repoOwner, repoName] = pullRequest.githubRepoNameWithOwner.split('/');
 
     await analysePullRequest({
       owner: repoOwner,

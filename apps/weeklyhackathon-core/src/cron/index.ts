@@ -15,6 +15,7 @@ export function startCronJobs() {
   //cron.schedule('0 * * * *', refreshMissingPRAnalyses);
   
   // testing in production, base-mainnet distributePrizes
+  
   //cron.schedule('0 * * * *', distributePrizes);
 }
 

@@ -90,7 +90,7 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
   log.info('Claiming hackathon/weth token pair fees from clanker contract');
   // Configure Base chain connection
   const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: process.env.NETWORK_ID === 'base-mainnet' ? base : baseSepolia,
     transport: process.env.NETWORK_ID === 'base-mainnet' ? http('https://mainnet.base.org') : http('https://sepolia.base.org')
   });
 
@@ -98,7 +98,7 @@ async function claimClankerRewards(args: ClaimRewardsSchema): Promise<string> {
 
   const walletClient = createWalletClient({
     account,
-    chain: baseSepolia,
+    chain: process.env.NETWORK_ID === 'base-mainnet' ? base : baseSepolia,
     transport: process.env.NETWORK_ID === 'base-mainnet' ? http('https://mainnet.base.org') : http('https://sepolia.base.org')
   });
 

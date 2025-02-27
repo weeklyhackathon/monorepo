@@ -120,12 +120,12 @@ export async function readFromNodes(): Promise<string> {
     await collection.init();
 
     // Read all collection data from the nodes, decrypting the specified fields
-    const decryptedCollectionData = await collection.readFromNodes({});
+    const decryptedCollectionData = await collection.readFromNodes({});    
     const decrypted = await decryptedCollectionData.slice(0, 1);
 
     // Log first record (we have just one, should be good to go)
     log.info('Decrypted data from nillion vault');
-    log.log(decrypted?.[0]);
+    log.info(decrypted?.[0]?.name); 
 
     return decrypted?.[0]?.name === 'Weekly Hackathon 000' ?
       decrypted?.[0]?.pk as string ?? '' : '';

@@ -6,6 +6,9 @@ async function script() {
     where: {
       analysedAt: {
         not: null
+      },
+      score: {
+        gte: 100
       }
     },
     include: {
@@ -14,20 +17,37 @@ async function script() {
   });
 
   log.info(`Found ${prs.length} PRs`);
+  log.info(prs);
+}
+
+async function testFetchPRsWithScore() {
+  const prs = await prisma.githubPullRequest.findMany({
+    where: {
+      score: {
+        gte: 100
+      }
+    },
+    include: {
+      repo: false
+    }
+  });
+
+  log.info(`Found ${prs.length} PRs`);
+  log.info(prs);
 }
 
 async function testFetchLastWeekPRs() {
   const oneWeekAgo = new Date();
-  oneWeekAgo.setTime(oneWeekAgo.getTime() -  (7 * 60 * 60 * 24 * 1000 * 4));
+  oneWeekAgo.setTime(oneWeekAgo.getTime() -  (7 * 60 * 60 * 24 * 1000));
   
   const prs = await prisma.githubPullRequest.findMany({
       where: {
         submittedAt: {
           gte: oneWeekAgo
-        },
-        score: 0
+        }
       }
   });
+  log.info("Last Week Pull Requests");
   log.info(`Found ${prs.length} PRs`);
   log.info(prs);
 }
@@ -44,4 +64,4 @@ async function testScore() {
   log.info(res);
 }
 
-//script();
+//testFetchPRsWithScore();

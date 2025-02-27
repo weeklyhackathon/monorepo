@@ -64,4 +64,4 @@ async function testScore() {
   log.info(res);
 }
 
-testFetchPRsWithScore();
+//testFetchPRsWithScore();

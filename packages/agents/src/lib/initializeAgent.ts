@@ -41,7 +41,8 @@ export async function initializeAgent(agentType: AgentType): Promise<AgentWithCo
     const walletDataStr: string = process.env.WALLET_DATA_STR || '';
     // Configure CDP Agentkit
     const config = {
-      cdpWalletData: walletDataStr || undefined,
+      //cdpWalletData: walletDataStr || undefined,
+      mnemonicPhrase: process.env.MNEMONIC, // address 0 -> 0x23d788e893cb6b67dBfd0C4280C76464833e7e61
       networkId: process.env.NETWORK_ID || 'base-sepolia'
     };
 
